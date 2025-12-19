@@ -1,0 +1,19 @@
+### TEST LOGIN
+POST http://localhost:8080/api/v1/auth/register
+Content-Type: application/json
+
+{
+    "phone": "08104068728",
+    "pin": "2901",
+    "first_name": "Mojola",
+    "last_name": "Ajibola"
+}
+
+### LOGIN API
+POST http://localhost:8080/api/v1/auth/login
+Content-Type: application/json
+
+{
+    "phone": "08104068728",
+    "pin": "2901"
+  }'

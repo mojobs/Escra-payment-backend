@@ -8,6 +8,10 @@ import (
 
 	"github.com/mojobs/lara-payment-backend.git/internal/config"
 	"github.com/mojobs/lara-payment-backend.git/internal/database"
+	"github.com/mojobs/lara-payment-backend.git/internal/models"
+	"github.com/mojobs/lara-payment-backend.git/internal/controllers"
+	"github.com/mojobs/lara-payment-backend.git/internal/services"
+	"github.com/mojobs/lara-payment-backend.git/pkg/jwt"
 )
 
 func main() {
@@ -16,6 +20,18 @@ func main() {
 	if err := database.Connect(cfg); err != nil {
 		log.Fatal("Failed to connect to database: ", err)
 	}
+
+	db:= database.GetDB()
+
+	if err := db.AutoMigrate(&models.User{}); err != nil {
+		log.Fatal("Failed to migrate database: ", err)
+	}
+
+	jwtService := jwt.NewJWTService(cfg.JWTSecret)
+	userService := services.NewUserService(db)
+	authService := services.NewAuthService(userService, jwtService)
+
+	authController := controllers.NewAuthController(authService)
 
 	if cfg.Environment == "development" {
 		gin.SetMode(gin.ReleaseMode)
@@ -29,6 +45,12 @@ func main() {
 			"message": "Payment API is running",
 		})
 	})
+
+	authRoutes := router.Group("/api/v1/auth")
+	{
+		authRoutes.POST("/register",authController.Register)
+		authRoutes.POST("/login", authController.Login)
+	}
 
 	addr := fmt.Sprintf(":%s", cfg.Port)
 	log.Printf("Server starting on port %s", addr)

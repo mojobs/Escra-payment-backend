@@ -42,6 +42,7 @@ func (s *AuthService) Register(req *models.RegisterRequest) (*models.AuthRespons
 			FirstName: user.FirstName,
 			LastName:  user.LastName,
 			Email:     user.Email,
+			Status:    user.Status,
 		},
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
@@ -68,10 +69,10 @@ func (s *AuthService) Login(req *models.LoginRequest) (*models.AuthResponse, err
 	return &models.AuthResponse{
 		User: models.UserResponse{
 			ID:        user.ID.String(),
-			Phone:     user.Phone,
 			FirstName: user.FirstName,
 			LastName:  user.LastName,
-			Email:     user.Email,
+			Phone:     user.Phone,
+			Status:    user.Status,
 		},
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,

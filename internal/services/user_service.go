@@ -31,11 +31,12 @@ func (s *UserService) CreateUser(req *models.RegisterRequest) (*models.User, err
 
 	user := &models.User{
 		Phone : req.Phone,
+        Password: req.Password,
 		PinHash: hashedPin,
 		FirstName: req.FirstName,
 		LastName: req.LastName,
 		Email: req.Email,
-		//Status : "ACTIVE",
+		Status: "ACTIVE",
 	}
 
 	if err := s.db.Create(user).Error; err != nil {

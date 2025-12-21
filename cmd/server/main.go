@@ -27,7 +27,10 @@ func main() {
 		log.Fatal("Failed to migrate database: ", err)
 	}
 
-	jwtService := jwt.NewJWTService(cfg.JWTSecret)
+	jwtService, err := jwt.NewJWTService(cfg.JWTSecret)
+	if err != nil {
+		log.Fatalf("Failed to authenticate JWT service : %v", err)
+	}
 	userService := services.NewUserService(db)
 	authService := services.NewAuthService(userService, jwtService)
 

@@ -1,0 +1,22 @@
+### TEST LOGIN
+POST http://localhost:8080/api/v1/auth/register
+Content-Type: application/json
+
+{
+    "phone": "08052468131",
+    "password": "securePass123",
+    "first_name": "Omolara",
+    "last_name": "Ajibola",
+    "pin": "1309",
+    "email" : "omolara.ajibola@example.com"
+}
+
+### LOGIN API
+POST http://localhost:8080/api/v1/auth/login
+Content-Type: application/json
+
+{
+    "phone": "08052468131",
+    "password": "securePass123",
+    "pin": "1309"
+  }

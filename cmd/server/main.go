@@ -7,12 +7,12 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/mojobs/lara-payment-backend.git/internal/config"
-	"github.com/mojobs/lara-payment-backend.git/internal/database"
-	"github.com/mojobs/lara-payment-backend.git/internal/models"
 	"github.com/mojobs/lara-payment-backend.git/internal/controllers"
+	"github.com/mojobs/lara-payment-backend.git/internal/database"
+	"github.com/mojobs/lara-payment-backend.git/internal/middleware"
+	"github.com/mojobs/lara-payment-backend.git/internal/models"
 	"github.com/mojobs/lara-payment-backend.git/internal/services"
 	"github.com/mojobs/lara-payment-backend.git/pkg/jwt"
-	"github.com/mojobs/lara-payment-backend.git/internal/middleware"
 )
 
 func main() {
@@ -22,9 +22,9 @@ func main() {
 		log.Fatal("Failed to connect to database: ", err)
 	}
 
-	db:= database.GetDB()
+	db := database.GetDB()
 
-	if err := db.AutoMigrate(&models.User{}); err != nil {
+	if err := db.AutoMigrate(&models.User{}, &models.Wallet{}); err != nil {
 		log.Fatal("Failed to migrate database: ", err)
 	}
 
@@ -34,13 +34,13 @@ func main() {
 		log.Fatalf("Failed to authenticate JWT service : %v", err)
 	}
 	userService := services.NewUserService(db)
-	authService := services.NewAuthService(userService, jwtService)
-
+	walletService := services.NewWalletService(db)
+	authService := services.NewAuthService(userService, walletService, jwtService)
 
 	//Initialize Controllers
 	authController := controllers.NewAuthController(authService)
 	userController := controllers.NewUserController(userService)
-
+	walletController := controllers.NewWalletController(walletService)
 
 	// Setup Gin router
 	if cfg.Environment == "development" {
@@ -48,7 +48,6 @@ func main() {
 	}
 
 	router := gin.Default()
-
 
 	//Health Check
 	router.GET("/health", func(c *gin.Context) {
@@ -66,11 +65,22 @@ func main() {
 			auth.POST("/login", authController.Login)
 		}
 
-		//Protected user routes
-		users := v1.Group("/users")
-		users.Use(middleware.AuthMiddleware(jwtService))
+		// Protected routes
+		protected := v1.Group("")
 		{
-			users.GET("/profile", userController.GetProfile)
+			protected.Use(middleware.AuthMiddleware(jwtService))
+			// User routes
+			users := protected.Group("/users")
+			{
+				users.GET("/profile", userController.GetProfile)
+			}
+
+			// Wallet routes
+			wallets := protected.Group("/wallets")
+			{
+				wallets.GET("/balance", walletController.GetBalance)
+				wallets.GET("/", walletController.GetWallet)
+			}
 		}
 	}
 

@@ -24,7 +24,7 @@ func main() {
 
 	db := database.GetDB()
 
-	if err := db.AutoMigrate(&models.User{}, &models.Wallet{}); err != nil {
+	if err := db.AutoMigrate(&models.User{}, &models.Wallet{}, &models.Transaction{}, &models.LedgerEntry{}); err != nil {
 		log.Fatal("Failed to migrate database: ", err)
 	}
 

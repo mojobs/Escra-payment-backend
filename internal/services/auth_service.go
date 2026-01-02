@@ -9,12 +9,14 @@ import (
 
 type AuthService struct {
 	userService *UserService
+	walletService *WalletService
 	jwtService  *jwt.JWTService
 }
 
-func NewAuthService(userService *UserService, jwtService *jwt.JWTService) *AuthService {
+func NewAuthService(userService *UserService, walletService *WalletService, jwtService *jwt.JWTService) *AuthService {
 	return &AuthService{
 		userService: userService,
+		walletService : walletService,
 		jwtService:  jwtService,
 	}
 }
@@ -25,6 +27,13 @@ func (s *AuthService) Register(req *models.RegisterRequest) (*models.AuthRespons
 		return nil, err
 	}
 
+	// Create wallet for user
+	_, err = s.walletService.CreateWallet(user.ID, "NGN")
+	if err != nil {
+		return nil, err
+	}
+
+	//Generate tokens
 	accessToken, err := s.jwtService.GenerateToken(user.ID.String(), user.Phone, 15*time.Minute)
 	if err != nil {
 		return nil, err

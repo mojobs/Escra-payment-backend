@@ -44,7 +44,7 @@ type SuccessResponse struct {
 }
 
 type TransferRequest struct {
-	RecipientWalletID string  `json:"recipient_wallet_id" binding:"required,uuid"`
+	RecipientWalletID string  `json:"wallet_id" binding:"required,uuid"`
 	Amount            float64 `json:"amount" binding:"required,gt=0"`
 	Description       string  `json:"description" binding:"omitempty,max=500"`
 	Pin               string  `json:"pin" binding:"required"`

@@ -18,5 +18,9 @@ Content-Type: application/json
 {
     "phone": "08052468131",
     "password": "securePass123",
-    "pin": "1309"
-  }
+    "pin": "1309" 
+}
+
+### GET USER PROFILE
+GET http://localhost:8080/api/v1/users/profile
+Authorization: Bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiOGIyODE4YWUtNjkwYS00ODVlLWExMWUtNmIwODdjM2U5NWM0IiwicGhvbmUiOiIwODA1MjQ2ODEzMSIsImV4cCI6MTc2NzAzODc4MiwibmJmIjoxNzY2NDMzOTgyLCJpYXQiOjE3NjY0MzM5ODIsImp0aSI6ImQ1NzIzMGFhLTNlMjctNDMzMS04MDE3LTc1YjY4ZTE0ZmQ5MCJ9.rBqO7s8omj85PVZPk1JPqWRF6jeJUPLbAM83yfHkfo_7oL4FTgeYa5rBNYWumPOL6rYhj3wS-PrmXAy8QTaZyw

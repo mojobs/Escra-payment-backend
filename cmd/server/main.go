@@ -12,6 +12,7 @@ import (
 	"github.com/mojobs/lara-payment-backend.git/internal/controllers"
 	"github.com/mojobs/lara-payment-backend.git/internal/services"
 	"github.com/mojobs/lara-payment-backend.git/pkg/jwt"
+	"github.com/mojobs/lara-payment-backend.git/internal/middleware"
 )
 
 func main() {
@@ -27,6 +28,7 @@ func main() {
 		log.Fatal("Failed to migrate database: ", err)
 	}
 
+	//Initialize services and controllers
 	jwtService, err := jwt.NewJWTService(cfg.JWTSecret)
 	if err != nil {
 		log.Fatalf("Failed to authenticate JWT service : %v", err)
@@ -34,14 +36,21 @@ func main() {
 	userService := services.NewUserService(db)
 	authService := services.NewAuthService(userService, jwtService)
 
-	authController := controllers.NewAuthController(authService)
 
+	//Initialize Controllers
+	authController := controllers.NewAuthController(authService)
+	userController := controllers.NewUserController(userService)
+
+
+	// Setup Gin router
 	if cfg.Environment == "development" {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
 	router := gin.Default()
 
+
+	//Health Check
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"status":  "ok",
@@ -49,10 +58,20 @@ func main() {
 		})
 	})
 
-	authRoutes := router.Group("/api/v1/auth")
+	v1 := router.Group("/api/v1")
 	{
-		authRoutes.POST("/register",authController.Register)
-		authRoutes.POST("/login", authController.Login)
+		auth := v1.Group("/auth")
+		{
+			auth.POST("/register", authController.Register)
+			auth.POST("/login", authController.Login)
+		}
+
+		//Protected user routes
+		users := v1.Group("/users")
+		users.Use(middleware.AuthMiddleware(jwtService))
+		{
+			users.GET("/profile", userController.GetProfile)
+		}
 	}
 
 	addr := fmt.Sprintf(":%s", cfg.Port)

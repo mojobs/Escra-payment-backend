@@ -56,9 +56,9 @@ func (s *UserService) GetUserByPhone(phone string) (*models.User, error) {
     }
     return &user, nil
 }
-func (s *UserService) GetUserByWallet(walletID string) (*models.User, error) {
+func (s *UserService) GetUserByWallet(id string) (*models.User, error) {
     var user models.User
-    if err := s.db.Where("wallet_id = ?", walletID).First(&user).Error; err != nil {
+    if err := s.db.Where("id = ?", id).First(&user).Error; err != nil {
         if errors.Is(err, gorm.ErrRecordNotFound) {
             return nil, errors.New("user not found")
         }

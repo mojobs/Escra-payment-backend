@@ -36,11 +36,13 @@ func main() {
 	userService := services.NewUserService(db)
 	walletService := services.NewWalletService(db)
 	authService := services.NewAuthService(userService, walletService, jwtService)
+	transactionService := services.NewTransactionService(db, userService, walletService)
 
 	//Initialize Controllers
 	authController := controllers.NewAuthController(authService)
 	userController := controllers.NewUserController(userService)
 	walletController := controllers.NewWalletController(walletService)
+	transactionController := controllers.NewTransactionController(transactionService)
 
 	// Setup Gin router
 	if cfg.Environment == "development" {
@@ -81,6 +83,13 @@ func main() {
 				wallets.GET("/balance", walletController.GetBalance)
 				wallets.GET("/", walletController.GetWallet)
 			}
+
+			transactioons := protected.Group("/transactions")
+			{
+				transactioons.POST("/transfer", transactionController.Transfer)
+				transactioons.GET("/history", transactionController.GetHistory)
+				transactioons.GET("/:reference", transactionController.GetByReference)
+			}	
 		}
 	}
 

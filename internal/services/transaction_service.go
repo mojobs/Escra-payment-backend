@@ -4,12 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"time"
-	"log"
+	// "log"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	"golang.org/x/crypto/bcrypt"
+	// "golang.org/x/crypto/bcrypt"
 
 
 
@@ -68,17 +68,17 @@ func (s *TransactionService) Transfer(userID uuid.UUID, req *models.TransferRequ
 		tx.Rollback()
 		return nil, err
 	}
-	log.Printf("=== PIN Verification Debug ===")
-	log.Printf("User ID: %s", userID.String())
-	log.Printf("Provided PIN: '%s' (length: %d)", req.Pin, len(req.Pin))
-	log.Printf("Stored PIN hash: '%s' (length: %d)", user.PinHash, len(user.PinHash))
-	log.Printf("PIN hash starts with: %s", user.PinHash[:7]) 
-	// Add this temporary test right before your CheckPassword call
-testErr := bcrypt.CompareHashAndPassword(
-    []byte("$2a$12$Tc/d53aVqobrZCMZjzbLzOUGW66.uZHTHXYH88pBywRbifDOAq22q"),
-    []byte("2910"),
-)
-log.Printf("Direct hash test result: %v", testErr)
+// 	log.Printf("=== PIN Verification Debug ===")
+// 	log.Printf("User ID: %s", userID.String())
+// 	log.Printf("Provided PIN: '%s' (length: %d)", req.Pin, len(req.Pin))
+// 	log.Printf("Stored PIN hash: '%s' (length: %d)", user.PinHash, len(user.PinHash))
+// 	log.Printf("PIN hash starts with: %s", user.PinHash[:7]) 
+// 	// Add this temporary test right before your CheckPassword call
+// testErr := bcrypt.CompareHashAndPassword(
+//     []byte("$2a$12$Tc/d53aVqobrZCMZjzbLzOUGW66.uZHTHXYH88pBywRbifDOAq22q"),
+//     []byte("2910"),
+// )
+// log.Printf("Direct hash test result: %v", testErr)
 
 	if err := utils.CheckPassword(user.PinHash, req.Pin); err != nil {
 		tx.Rollback()

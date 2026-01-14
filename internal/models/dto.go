@@ -67,9 +67,6 @@ type TransactionDetail struct {
 
 type Recipient struct {
 	WalletID  string `json:"wallet_id"`
-	UserID    string `json:"user_id"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
 	Name	  string `json:"name"`
 }
 

@@ -20,7 +20,7 @@ func NewUserService(db *gorm.DB) *UserService {
 
 func (s *UserService) CreateUser(req *models.RegisterRequest) (*models.User, error) {
 	var existingUser models.User
-	if err:= s.db.Where("phone = ?", req.Phone).First(&existingUser).Error; err == nil {
+	if err := s.db.Where("phone = ?", req.Phone).First(&existingUser).Error; err == nil {
 		return nil, errors.New("Phone number already registered")
 	}
 
@@ -30,13 +30,13 @@ func (s *UserService) CreateUser(req *models.RegisterRequest) (*models.User, err
 	}
 
 	user := &models.User{
-		Phone : req.Phone,
-        Password: req.Password,
-		PinHash: hashedPin,
+		Phone:     req.Phone,
+		Password:  req.Password,
+		PinHash:   hashedPin,
 		FirstName: req.FirstName,
-		LastName: req.LastName,
-		Email: req.Email,
-		Status: "ACTIVE",
+		LastName:  req.LastName,
+		Email:     req.Email,
+		Status:    "ACTIVE",
 	}
 
 	if err := s.db.Create(user).Error; err != nil {
@@ -47,73 +47,83 @@ func (s *UserService) CreateUser(req *models.RegisterRequest) (*models.User, err
 }
 
 func (s *UserService) GetUserByPhone(phone string) (*models.User, error) {
-    var user models.User
-    if err := s.db.Where("phone = ?", phone).First(&user).Error; err != nil {
-        if errors.Is(err, gorm.ErrRecordNotFound) {
-            return nil, errors.New("user not found")
-        }
-        return nil, err
-    }
-    return &user, nil
+	var user models.User
+	if err := s.db.Where("phone = ?", phone).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("user not found")
+		}
+		return nil, err
+	}
+	return &user, nil
 }
-func (s *UserService) GetUserByWallet(id string) (*models.User, error) {
-    var user models.User
-    if err := s.db.Where("id = ?", id).First(&user).Error; err != nil {
-        if errors.Is(err, gorm.ErrRecordNotFound) {
-            return nil, errors.New("user not found")
-        }
-        return nil, err
-    }
-    return &user, nil
+func (s *UserService) GetUserByWallet(walletID string) (*models.User, error) {
+	// First, find the wallet by its ID
+	var wallet models.Wallet
+	if err := s.db.Where("id = ?", walletID).First(&wallet).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("wallet not found")
+		}
+		return nil, err
+	}
+
+	// Then, find the user by the wallet's UserID and preload the wallet
+	var user models.User
+	if err := s.db.Where("id = ?", wallet.UserID).Preload("Wallet").First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("user not found")
+		}
+		return nil, err
+	}
+	return &user, nil
 }
 
 func (s *UserService) GetUserByID(id string) (*models.User, error) {
-    var user models.User
-    if err := s.db.Where("id = ?", id).First(&user).Error; err != nil {
-        if errors.Is(err, gorm.ErrRecordNotFound) {
-            return nil, errors.New("user not found")
-        }
-        return nil, err
-    }
-    return &user, nil
+	var user models.User
+	if err := s.db.Where("id = ?", id).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("user not found")
+		}
+		return nil, err
+	}
+	return &user, nil
 }
 
 func (s *UserService) ValidateUser(phone, pin string) (*models.User, error) {
-    user, err := s.GetUserByPhone(phone)
-    if err != nil {
-        return nil, err
-    }
+	user, err := s.GetUserByPhone(phone)
+	if err != nil {
+		return nil, err
+	}
 
-    // Check account lock
-    if user.FailedLoginAttempts >= 5 {
-        lockoutDuration := 15 * time.Minute
-        if user.LastFailedLoginAt != nil {
-            timeSinceLastFail := time.Since(*user.LastFailedLoginAt)
-            if timeSinceLastFail < lockoutDuration {
-                return nil, errors.New("account locked. try again in 15 minutes")
-            }
-            // Reset failed attempts after lockout period
-            user.FailedLoginAttempts = 0
-            s.db.Save(user)
-        }
-    }
+	// Check account lock
+	if user.FailedLoginAttempts >= 5 {
+		lockoutDuration := 15 * time.Minute
+		if user.LastFailedLoginAt != nil {
+			timeSinceLastFail := time.Since(*user.LastFailedLoginAt)
+			if timeSinceLastFail < lockoutDuration {
+				return nil, errors.New("account locked. try again in 15 minutes")
+			}
+			// Reset failed attempts after lockout period
+			user.FailedLoginAttempts = 0
+			s.db.Save(user)
+		}
+	}
 
-    // Validate PIN
-    if err := utils.CheckPassword(user.PinHash, pin); err != nil {
-        // Increment failed attempts
-        user.FailedLoginAttempts++
-        now := time.Now()
-        user.LastFailedLoginAt = &now
-        s.db.Save(user)
-        return nil, errors.New("invalid pin")
-    }
+	// Validate PIN
+	if err := utils.CheckPassword(user.PinHash, pin); err != nil {
+		// Increment failed attempts
+		user.FailedLoginAttempts++
+		now := time.Now()
+		user.LastFailedLoginAt = &now
+		s.db.Save(user)
+		return nil, errors.New("invalid pin")
+	}
 
-    // Reset failed attempts on successful login
-    if user.FailedLoginAttempts > 0 {
-        user.FailedLoginAttempts = 0
-        user.LastFailedLoginAt = nil
-        s.db.Save(user)
-    }
+	// Reset failed attempts on successful login
+	if user.FailedLoginAttempts > 0 {
+		user.FailedLoginAttempts = 0
+		user.LastFailedLoginAt = nil
+		s.db.Save(user)
+	}
 
-    return user, nil
+	return user, nil
 }

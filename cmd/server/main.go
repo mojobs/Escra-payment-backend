@@ -22,6 +22,10 @@ func main() {
 		log.Fatal("Failed to connect to database: ", err)
 	}
 
+	if err := database.ConnectRedis(cfg); err != nil {
+		log.Fatal("Failed to connect to Redis: ", err)
+	}
+
 	db := database.GetDB()
 
 	if err := db.AutoMigrate(&models.User{}, &models.Wallet{}, &models.Transaction{}, &models.LedgerEntry{}); err != nil {
@@ -51,6 +55,9 @@ func main() {
 
 	router := gin.Default()
 
+	//Apply general rate limiting to all routes
+	router.Use(middleware.RateLimiterMiddleware())
+
 	//Health Check
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
@@ -62,6 +69,7 @@ func main() {
 	v1 := router.Group("/api/v1")
 	{
 		auth := v1.Group("/auth")
+		auth.Use(middleware.StrictRateLimiterMiddleware())
 		{
 			auth.POST("/register", authController.Register)
 			auth.POST("/login", authController.Login)
@@ -71,6 +79,7 @@ func main() {
 		protected := v1.Group("")
 		{
 			protected.Use(middleware.AuthMiddleware(jwtService))
+			protected.Use(middleware.UserRateLimiterMiddleware())
 			// User routes
 			users := protected.Group("/users")
 			{
@@ -84,11 +93,11 @@ func main() {
 				wallets.GET("/", walletController.GetWallet)
 			}
 
-			transactioons := protected.Group("/transactions")
+			transactions := protected.Group("/transactions")
 			{
-				transactioons.POST("/transfer", transactionController.Transfer)
-				transactioons.GET("/history", transactionController.GetHistory)
-				transactioons.GET("/:reference", transactionController.GetByReference)
+				transactions.POST("/transfer",middleware.StrictRateLimiterMiddleware(),transactionController.Transfer)
+				transactions.GET("/history", transactionController.GetHistory)
+				transactions.GET("/:reference", transactionController.GetByReference)
 			}	
 		}
 	}

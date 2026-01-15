@@ -28,7 +28,7 @@ func main() {
 
 	db := database.GetDB()
 
-	if err := db.AutoMigrate(&models.User{}, &models.Wallet{}, &models.Transaction{}, &models.LedgerEntry{}); err != nil {
+	if err := db.AutoMigrate(&models.User{}, &models.Wallet{}, &models.Transaction{}, &models.LedgerEntry{}, &models.IdempotencyKey{},); err != nil {
 		log.Fatal("Failed to migrate database: ", err)
 	}
 
@@ -41,7 +41,7 @@ func main() {
 	walletService := services.NewWalletService(db)
 	authService := services.NewAuthService(userService, walletService, jwtService)
 	transactionService := services.NewTransactionService(db, userService, walletService)
-
+	idempotencyService := services.NewIdempotencyService(db)
 	//Initialize Controllers
 	authController := controllers.NewAuthController(authService)
 	userController := controllers.NewUserController(userService)
@@ -80,6 +80,7 @@ func main() {
 		{
 			protected.Use(middleware.AuthMiddleware(jwtService))
 			protected.Use(middleware.UserRateLimiterMiddleware())
+			protected.Use(middleware.IdempotencyMiddleware(idempotencyService))
 			// User routes
 			users := protected.Group("/users")
 			{

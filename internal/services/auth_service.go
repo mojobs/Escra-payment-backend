@@ -2,6 +2,7 @@ package services
 
 import (
 	"time"
+	"log"
 
 	"github.com/mojobs/lara-payment-backend.git/internal/models"
 	"github.com/mojobs/lara-payment-backend.git/pkg/jwt"
@@ -10,13 +11,15 @@ import (
 type AuthService struct {
 	userService *UserService
 	walletService *WalletService
+	transactionLimitService *TransactionLimitService
 	jwtService  *jwt.JWTService
 }
 
-func NewAuthService(userService *UserService, walletService *WalletService, jwtService *jwt.JWTService) *AuthService {
+func NewAuthService(userService *UserService, walletService *WalletService, limitService *TransactionLimitService, jwtService *jwt.JWTService) *AuthService {
 	return &AuthService{
 		userService: userService,
 		walletService : walletService,
+		transactionLimitService: limitService,
 		jwtService:  jwtService,
 	}
 }
@@ -31,6 +34,11 @@ func (s *AuthService) Register(req *models.RegisterRequest) (*models.AuthRespons
 	_, err = s.walletService.CreateWallet(user.ID, "NGN")
 	if err != nil {
 		return nil, err
+	}
+
+	//Create default transaction limits 
+	if err := s.transactionLimitService.CreateDefaultLimit(user.ID); err != nil {
+		log.Printf("Failed to create transaction limits: %v", err)
 	}
 
 	//Generate tokens

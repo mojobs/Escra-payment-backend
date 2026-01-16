@@ -28,7 +28,7 @@ func main() {
 
 	db := database.GetDB()
 
-	if err := db.AutoMigrate(&models.User{}, &models.Wallet{}, &models.Transaction{}, &models.LedgerEntry{}, &models.IdempotencyKey{},); err != nil {
+	if err := db.AutoMigrate(&models.User{}, &models.Wallet{}, &models.Transaction{}, &models.LedgerEntry{}, &models.IdempotencyKey{}, &models.TransactionLimit{}, &models.TransactionUsage{}); err != nil {
 		log.Fatal("Failed to migrate database: ", err)
 	}
 
@@ -39,14 +39,17 @@ func main() {
 	}
 	userService := services.NewUserService(db)
 	walletService := services.NewWalletService(db)
-	authService := services.NewAuthService(userService, walletService, jwtService)
-	transactionService := services.NewTransactionService(db, userService, walletService)
+	limitService := services.NewTransactionLimitService(db)
+	authService := services.NewAuthService(userService, walletService, limitService, jwtService)
+	transactionService := services.NewTransactionService(db, userService, walletService, limitService)
 	idempotencyService := services.NewIdempotencyService(db)
+
 	//Initialize Controllers
 	authController := controllers.NewAuthController(authService)
 	userController := controllers.NewUserController(userService)
 	walletController := controllers.NewWalletController(walletService)
 	transactionController := controllers.NewTransactionController(transactionService)
+	limitController := controllers.NewLimitController(limitService)
 
 	// Setup Gin router
 	if cfg.Environment == "development" {
@@ -96,10 +99,15 @@ func main() {
 
 			transactions := protected.Group("/transactions")
 			{
-				transactions.POST("/transfer",middleware.StrictRateLimiterMiddleware(),transactionController.Transfer)
+				transactions.POST("/transfer", middleware.StrictRateLimiterMiddleware(), transactionController.Transfer)
 				transactions.GET("/history", transactionController.GetHistory)
 				transactions.GET("/:reference", transactionController.GetByReference)
-			}	
+			}
+
+			limits := protected.Group("/limits")
+			{
+				limits.GET("/", limitController.GetLimits)
+			}
 		}
 	}
 

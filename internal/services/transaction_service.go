@@ -3,31 +3,30 @@ package services
 import (
 	"errors"
 	"fmt"
+	"log"
 	"time"
-	// "log"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	// "golang.org/x/crypto/bcrypt"
-
-
 
 	"github.com/mojobs/lara-payment-backend.git/internal/models"
 	"github.com/mojobs/lara-payment-backend.git/internal/utils"
 )
 
 type TransactionService struct {
-	db            *gorm.DB
-	userService   *UserService
-	walletService *WalletService
+	db                      *gorm.DB
+	userService             *UserService
+	walletService           *WalletService
+	transactionLimitService *TransactionLimitService
 }
 
-func NewTransactionService(db *gorm.DB, userService *UserService, walletService *WalletService) *TransactionService {
+func NewTransactionService(db *gorm.DB, userService *UserService, walletService *WalletService, limitService *TransactionLimitService) *TransactionService {
 	return &TransactionService{
-		db:            db,
-		userService:   userService,
-		walletService: walletService,
+		db:                      db,
+		userService:             userService,
+		walletService:           walletService,
+		transactionLimitService: limitService,
 	}
 }
 
@@ -39,14 +38,8 @@ func (s *TransactionService) generateReference() string {
 // Transfer handeles P2P money transfer with doubele-entry bookeeping
 func (s *TransactionService) Transfer(userID uuid.UUID, req *models.TransferRequest) (*models.TransferResponse, error) {
 
-	const minAmount = 100
-	if req.Amount <= minAmount {
-		return nil, errors.New("Transfer amount is below the minimum limit")
-	}
-
-	const maxTransferAmount = 1000000
-	if req.Amount > maxTransferAmount {
-		return nil, errors.New("Transfer amount exceeds max limit")
+	if err := s.transactionLimitService.CheckTransactionLimit(userID, req.Amount); err != nil{
+		return nil , err
 	}
 	//Start database transaction
 
@@ -68,17 +61,6 @@ func (s *TransactionService) Transfer(userID uuid.UUID, req *models.TransferRequ
 		tx.Rollback()
 		return nil, err
 	}
-// 	log.Printf("=== PIN Verification Debug ===")
-// 	log.Printf("User ID: %s", userID.String())
-// 	log.Printf("Provided PIN: '%s' (length: %d)", req.Pin, len(req.Pin))
-// 	log.Printf("Stored PIN hash: '%s' (length: %d)", user.PinHash, len(user.PinHash))
-// 	log.Printf("PIN hash starts with: %s", user.PinHash[:7]) 
-// 	// Add this temporary test right before your CheckPassword call
-// testErr := bcrypt.CompareHashAndPassword(
-//     []byte("$2a$12$Tc/d53aVqobrZCMZjzbLzOUGW66.uZHTHXYH88pBywRbifDOAq22q"),
-//     []byte("2910"),
-// )
-// log.Printf("Direct hash test result: %v", testErr)
 
 	if err := utils.CheckPassword(user.PinHash, req.Pin); err != nil {
 		tx.Rollback()
@@ -234,6 +216,9 @@ func (s *TransactionService) Transfer(userID uuid.UUID, req *models.TransferRequ
 		return nil, err
 	}
 
+	if err := s.transactionLimitService.RecordTransaction(userID, req.Amount); err != nil {
+		log.Printf("Failed to record transaction usage L %v", err)
+	}
 	// 13 Return response
 	recipientName := fmt.Sprintf("%s %s", recipient.FirstName, recipient.LastName)
 	if recipientName == " " {

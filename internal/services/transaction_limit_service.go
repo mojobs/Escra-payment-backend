@@ -117,17 +117,15 @@ func (s *TransactionLimitService) getDailyUsage(userID uuid.UUID, date time.Time
 }
 
 func (s *TransactionLimitService) getMonthlyUsage(userID uuid.UUID, monthStart time.Time) (float64, error) {
-	var result struct {
-		total float64
-	}
+	var total float64
 	monthEnd := monthStart.AddDate(0, 1, 0)
 
-	err := s.db.Model(&models.TransactionUsage{}).Select("COALESCE(SUM(amount), 0) as total").Where("user_id = ? AND date >= ? AND date < ?", userID, monthStart, monthEnd).Scan(&result).Error
+	row := s.db.Model(&models.TransactionUsage{}).Select("COALESCE(SUM(amount), 0) as total").Where("user_id = ? AND date >= ? AND date < ?", userID, monthStart, monthEnd).Row()
 
-	if err != nil {
+	if err := row.Scan(&total); err != nil {
 		return 0, err
 	}
-	return result.total, nil
+	return total, nil
 }
 
 func (s *TransactionLimitService) GetUsageStats(userID uuid.UUID) (map[string]interface{}, error) {

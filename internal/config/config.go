@@ -25,6 +25,10 @@ func LoadConfig() *Config {
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("Error loading .env file")
 	}
+	jwt_secret := os.Getenv("JWT_SECRET")
+	if jwt_secret == "" {
+		log.Fatal("JWT SECRET is in env file")
+	}
 	return &Config{
 		Port:                   getEnv("PORT", "8080"),
 		DBHost:                 getEnv("DB_HOST", "localhost"),
@@ -33,7 +37,7 @@ func LoadConfig() *Config {
 		DBPassword:             getEnv("DB_PASSWORD", "p1ssw4rd"),
 		DBName:                 getEnv("DB_NAME", "payment_app_dev"),
 		DBSSLMode:              getEnv("DB_SSLMODE", "disable"),
-		JWTSecret:              getEnv("JWT_SECRET", "secret"),
+		JWTSecret:              jwt_secret,
 		JWTExpiration:          getEnv("JWT_EXPIRATION", "15m"),
 		RefreshTokenExpiration: getEnv("REFRESH_TOKEN_EXPIRATION", "168h"),
 		Environment:            getEnv("ENVIRONMENT", "development"),

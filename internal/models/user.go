@@ -1,9 +1,10 @@
 package models
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"time"
 )
 
 type User struct {
@@ -15,7 +16,7 @@ type User struct {
 	LastName            string         `gorm:"size:100" json:"last_name,omitempty"`
 	Email               string         `gorm:"uniqueIndex;size:225" json:"email,omitempty"`
 	Status              string         `gorm:"type:varchar(20);default:'ACTIVE'" json:"status"`
-	Wallet              Wallet         `gorm:"constraint:OnDelete:CASCADE;" json:"wallet,omitempty"`
+	Wallet              Wallet         `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;" json:"wallet,omitempty"`
 	FailedLoginAttempts int            `gorm:"default:0" json:"-"`
 	LastFailedLoginAt   *time.Time     `json:"-"`
 	CreatedAt           time.Time      `json:"created_at"`

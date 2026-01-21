@@ -15,6 +15,9 @@ type Config struct {
 	DBPassword             string
 	DBName                 string
 	DBSSLMode              string
+	RedisHost              string
+	RedisPort              string
+	RedisPassword          string
 	JWTSecret              string
 	JWTExpiration          string
 	RefreshTokenExpiration string
@@ -37,6 +40,9 @@ func LoadConfig() *Config {
 		DBPassword:             getEnv("DB_PASSWORD", "p1ssw4rd"),
 		DBName:                 getEnv("DB_NAME", "payment_app_dev"),
 		DBSSLMode:              getEnv("DB_SSLMODE", "disable"),
+		RedisHost:              getEnv("REDIS_HOST", "localhost"),
+		RedisPort:              getEnv("REDIS_PORT", "6379"),
+		RedisPassword:          getEnv("REDIS_PASSWORD", ""),
 		JWTSecret:              jwt_secret,
 		JWTExpiration:          getEnv("JWT_EXPIRATION", "15m"),
 		RefreshTokenExpiration: getEnv("REFRESH_TOKEN_EXPIRATION", "168h"),

@@ -1,4 +1,5 @@
 package controllers
+
 import (
 	"net/http"
 	"strconv"
@@ -25,7 +26,7 @@ func (ctrl *TransactionController) Transfer(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{
-			Error: "validation_error",
+			Error:   "validation_error",
 			Message: err.Error(),
 		})
 		return
@@ -35,7 +36,7 @@ func (ctrl *TransactionController) Transfer(c *gin.Context) {
 	userID, err := uuid.Parse(userIDstr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{
-			Error: "invalid_user_id",
+			Error:   "invalid_user_id",
 			Message: "Invalid user ID format",
 		})
 		return
@@ -44,7 +45,7 @@ func (ctrl *TransactionController) Transfer(c *gin.Context) {
 	response, err := ctrl.transactionService.Transfer(userID, &req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{
-			Error: "transfer-failed",
+			Error:   "transfer-failed",
 			Message: err.Error(),
 		})
 		return
@@ -57,8 +58,8 @@ func (ctrl *TransactionController) GetHistory(c *gin.Context) {
 	userID, err := uuid.Parse(userIDstr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{
-			Error : "invalid_user_id",
-			Message : "Invalid user ID format",
+			Error:   "invalid_user_id",
+			Message: "Invalid user ID format",
 		})
 		return
 	}
@@ -76,30 +77,39 @@ func (ctrl *TransactionController) GetHistory(c *gin.Context) {
 	history, err := ctrl.transactionService.GetTransactionHistory(userID, limit)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{
-			Error : "fetch_failed",
-			Message : err.Error(),
+			Error:   "fetch_failed",
+			Message: err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"success":      true,
 		"transactions": history,
-		"count": len(history),
+		"count":        len(history),
 	})
 }
 
 func (ctrl *TransactionController) GetByReference(c *gin.Context) {
 	reference := c.Param("reference")
-
-	transaction, err := ctrl.transactionService.GetTransactionByReference(reference)
+	userIDstr := c.GetString("user_id")
+	userID, err := uuid.Parse(userIDstr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{
-			Error : "not_found",
-			Message : err.Error(),
-	})
-	return
-   }
-   c.JSON(http.StatusOK, transaction)
+			Error:   "invalid_user_id",
+			Message: "Invalid user ID format",
+		})
+		return
+	}
+
+	transaction, err := ctrl.transactionService.GetTransactionByReference(userID, reference)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Error:   "not_found",
+			Message: err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, transaction)
 
 }

@@ -3,7 +3,6 @@ package services
 import (
 	"errors"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -35,191 +34,141 @@ func (s *TransactionService) generateReference() string {
 	return fmt.Sprintf("TRX%s", uuid.New().String()[:8]) // More reliable
 }
 
-// Transfer handeles P2P money transfer with doubele-entry bookeeping
+// Transfer handles P2P money transfer with double-entry bookkeeping.
 func (s *TransactionService) Transfer(userID uuid.UUID, req *models.TransferRequest) (*models.TransferResponse, error) {
-
-	if err := s.transactionLimitService.CheckTransactionLimit(userID, req.Amount); err != nil{
-		return nil , err
-	}
-	//Start database transaction
-
-	tx := s.db.Begin()
-	if tx.Error != nil {
-		return nil, tx.Error
+	if !req.Amount.IsPositive() {
+		return nil, errors.New("amount must be greater than zero")
 	}
 
-	//Defer rollback in case of panic
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
+	var transaction models.Transaction
+	var recipient models.User
+	var recipientWallet models.Wallet
+	var newSenderBalance = req.Amount
+
+	err := s.db.Transaction(func(tx *gorm.DB) error {
+		var user models.User
+		if err := tx.Where("id = ?", userID).First(&user).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return errors.New("user not found")
+			}
+			return err
 		}
-	}()
 
-	// 1. Verify user's Pin
-	user, err := s.userService.GetUserByID(userID.String())
+		if err := utils.CheckPassword(user.PinHash, req.Pin); err != nil {
+			return errors.New("invalid PIN")
+		}
+
+		recipientWalletID, err := uuid.Parse(req.RecipientWalletID)
+		if err != nil {
+			return errors.New("invalid recipient wallet")
+		}
+
+		if err := tx.Where("id = ?", recipientWalletID).First(&recipientWallet).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return errors.New("recipient wallet not found")
+			}
+			return err
+		}
+
+		if recipientWallet.UserID == nil {
+			return errors.New("recipient wallet is not user owned")
+		}
+
+		if *recipientWallet.UserID == userID {
+			return errors.New("cannot transfer to self")
+		}
+
+		if err := tx.Where("id = ?", *recipientWallet.UserID).First(&recipient).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return errors.New("recipient not found")
+			}
+			return err
+		}
+
+		var senderWallet models.Wallet
+		if err := s.lockWallets(tx, userID, recipient.ID, &senderWallet, &recipientWallet); err != nil {
+			return err
+		}
+
+		if senderWallet.Status != "ACTIVE" {
+			return errors.New("sender wallet is not active")
+		}
+		if recipientWallet.Status != "ACTIVE" {
+			return errors.New("recipient wallet is not active")
+		}
+
+		if senderWallet.Balance < req.Amount {
+			return errors.New("insufficient funds")
+		}
+
+		if err := s.transactionLimitService.CheckAndRecordTransaction(tx, userID, req.Amount); err != nil {
+			return err
+		}
+
+		transaction = models.Transaction{
+			Reference:    s.generateReference(),
+			FromWalletID: &senderWallet.ID,
+			ToWalletID:   &recipientWallet.ID,
+			Amount:       req.Amount,
+			Currency:     "NGN",
+			Type:         "TRANSFER",
+			Status:       "PENDING",
+			Description:  req.Description,
+		}
+
+		if req.Description == "" {
+			transaction.Description = fmt.Sprintf("Transfer to %s", recipientWallet.ID.String())
+		}
+
+		if err := tx.Create(&transaction).Error; err != nil {
+			return err
+		}
+
+		newSenderBalance = senderWallet.Balance - req.Amount
+		newRecipientBalance := recipientWallet.Balance + req.Amount
+
+		if err := tx.Model(&senderWallet).Update("balance", newSenderBalance).Error; err != nil {
+			return err
+		}
+		if err := tx.Model(&recipientWallet).Update("balance", newRecipientBalance).Error; err != nil {
+			return err
+		}
+
+		ledgerEntries := []models.LedgerEntry{
+			{
+				TransactionID: transaction.ID,
+				WalletID:      senderWallet.ID,
+				Debit:         req.Amount,
+				Credit:        0,
+				BalanceAfter:  newSenderBalance,
+			},
+			{
+				TransactionID: transaction.ID,
+				WalletID:      recipientWallet.ID,
+				Debit:         0,
+				Credit:        req.Amount,
+				BalanceAfter:  newRecipientBalance,
+			},
+		}
+		if err := tx.Create(&ledgerEntries).Error; err != nil {
+			return err
+		}
+
+		completedAt := time.Now()
+		if err := tx.Model(&transaction).Updates(map[string]interface{}{
+			"status":       "COMPLETED",
+			"completed_at": completedAt,
+		}).Error; err != nil {
+			return err
+		}
+		transaction.Status = "COMPLETED"
+		transaction.CompletedAt = &completedAt
+		return nil
+	})
 	if err != nil {
-		tx.Rollback()
 		return nil, err
 	}
 
-	if err := utils.CheckPassword(user.PinHash, req.Pin); err != nil {
-		tx.Rollback()
-		return nil, errors.New("Invalid PIN")
-	}
-
-	// 2.Find recipient's wallet
-	recipient, err := s.userService.GetUserByWallet(req.RecipientWalletID)
-	if err != nil {
-		tx.Rollback()
-		return nil, errors.New("Recipient wallet not found")
-	}
-
-	// 3.Prevent self transfer
-	if recipient.ID == userID {
-		tx.Rollback()
-		return nil, errors.New("Cannot transfer to self")
-	}
-	var senderWallet, recipientWallet models.Wallet
-
-	// Determine locking order based on user IDs (always lock in ascending order)
-	lockSenderFirst := userID.String() < recipient.ID.String()
-
-	if lockSenderFirst {
-		// Lock sender wallet first
-		if err := tx.Clauses(
-			clause.Locking{Strength: "UPDATE"},
-		).Where("user_id = ?", userID).First(&senderWallet).Error; err != nil {
-			tx.Rollback()
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return nil, errors.New("Sender wallet not found")
-			}
-			return nil, err
-		}
-
-		// Then lock recipient wallet
-		if err := tx.Clauses(
-			clause.Locking{Strength: "UPDATE"},
-		).Where("user_id = ?", recipient.ID).First(&recipientWallet).Error; err != nil {
-			tx.Rollback()
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return nil, errors.New("Recipient wallet not found")
-			}
-			return nil, err
-		}
-	} else {
-		// Lock recipient wallet first
-		if err := tx.Clauses(
-			clause.Locking{Strength: "UPDATE"},
-		).Where("user_id = ?", recipient.ID).First(&recipientWallet).Error; err != nil {
-			tx.Rollback()
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return nil, errors.New("Recipient wallet not found")
-			}
-			return nil, err
-		}
-
-		// Then lock sender wallet
-		if err := tx.Clauses(
-			clause.Locking{Strength: "UPDATE"},
-		).Where("user_id = ?", userID).First(&senderWallet).Error; err != nil {
-			tx.Rollback()
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return nil, errors.New("Sender wallet not found")
-			}
-			return nil, err
-		}
-	}
-
-	// 6. Validate sufficient balance
-	if senderWallet.Balance < req.Amount {
-		tx.Rollback()
-		return nil, errors.New("Insufficient funds")
-	}
-
-	//Create transaction record
-	reference := s.generateReference()
-	transaction := models.Transaction{
-		Reference:    reference,
-		FromWalletID: &senderWallet.ID,
-		ToWalletID:   &recipientWallet.ID,
-		Amount:       req.Amount,
-		Currency:     "NGN",
-		Type:         "TRANSFER",
-		Status:       "PENDING",
-		Description:  req.Description,
-	}
-
-	if req.Description == "" {
-		transaction.Description = fmt.Sprintf("Transfer to %s", recipient.Wallet.ID.String())
-	}
-
-	if err := tx.Create(&transaction).Error; err != nil {
-		tx.Rollback()
-		return nil, err
-	}
-
-	// 8. Calculate new balances
-	newSenderBalance := senderWallet.Balance - req.Amount
-	newRecipientBalance := recipientWallet.Balance + req.Amount
-
-	//9. Update wallet balances
-	if err := tx.Model(&senderWallet).Update("balance", newSenderBalance).Error; err != nil {
-		tx.Rollback()
-		return nil, err
-	}
-	if err := tx.Model(&recipientWallet).Update("balance", newRecipientBalance).Error; err != nil {
-		tx.Rollback()
-		return nil, err
-	}
-
-	// 10. Create ledger entries (double-entry bookeeping)
-
-	//Debit entry (sender)
-	debitEntry := models.LedgerEntry{
-		TransactionID: transaction.ID,
-		WalletID:      senderWallet.ID,
-		Debit:         req.Amount,
-		Credit:        0,
-		BalanceAfter:  newSenderBalance,
-	}
-
-	if err := tx.Create(&debitEntry).Error; err != nil {
-		tx.Rollback()
-		return nil, err
-	}
-	// Credit entry (recipient)
-	creditEntry := models.LedgerEntry{
-		TransactionID: transaction.ID,
-		WalletID:      recipientWallet.ID,
-		Debit:         0,
-		Credit:        req.Amount,
-		BalanceAfter:  newRecipientBalance,
-	}
-
-	if err := tx.Create(&creditEntry).Error; err != nil {
-		tx.Rollback()
-		return nil, err
-	}
-
-	// 11 Update transaction status to COMPLETED
-	completedAt := time.Now()
-	if err := tx.Model(&transaction).Updates(map[string]interface{}{
-		"status":       "COMPLETED",
-		"completed_at": completedAt,
-	}).Error; err != nil {
-		tx.Rollback()
-		return nil, err
-	}
-
-	//12,. Commit transaction
-	if err := tx.Commit().Error; err != nil {
-		return nil, err
-	}
-
-	if err := s.transactionLimitService.RecordTransaction(userID, req.Amount); err != nil {
-		log.Printf("Failed to record transaction usage L %v", err)
-	}
-	// 13 Return response
 	recipientName := fmt.Sprintf("%s %s", recipient.FirstName, recipient.LastName)
 	if recipientName == " " {
 		recipientName = ""
@@ -232,7 +181,7 @@ func (s *TransactionService) Transfer(userID uuid.UUID, req *models.TransferRequ
 			Reference: transaction.Reference,
 			Amount:    transaction.Amount,
 			Recipient: models.Recipient{
-				WalletID: recipient.Wallet.ID.String(),
+				WalletID: recipientWallet.ID.String(),
 				Name:     recipientName,
 			},
 			Status:    transaction.Status,
@@ -240,6 +189,41 @@ func (s *TransactionService) Transfer(userID uuid.UUID, req *models.TransferRequ
 		},
 		NewBalance: newSenderBalance,
 	}, nil
+}
+
+func (s *TransactionService) lockWallets(tx *gorm.DB, senderUserID, recipientUserID uuid.UUID, senderWallet, recipientWallet *models.Wallet) error {
+	lock := clause.Locking{Strength: "UPDATE"}
+	lockSenderFirst := senderUserID.String() < recipientUserID.String()
+
+	if lockSenderFirst {
+		if err := tx.Clauses(lock).Where("owner_type = ? AND user_id = ?", "USER", senderUserID).First(senderWallet).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return errors.New("sender wallet not found")
+			}
+			return err
+		}
+		if err := tx.Clauses(lock).Where("owner_type = ? AND user_id = ?", "USER", recipientUserID).First(recipientWallet).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return errors.New("recipient wallet not found")
+			}
+			return err
+		}
+		return nil
+	}
+
+	if err := tx.Clauses(lock).Where("owner_type = ? AND user_id = ?", "USER", recipientUserID).First(recipientWallet).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("recipient wallet not found")
+		}
+		return err
+	}
+	if err := tx.Clauses(lock).Where("owner_type = ? AND user_id = ?", "USER", senderUserID).First(senderWallet).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("sender wallet not found")
+		}
+		return err
+	}
+	return nil
 }
 
 func (s *TransactionService) GetTransactionHistory(userID uuid.UUID, limit int) ([]models.TransactionHistoryResponse, error) {
@@ -280,11 +264,15 @@ func (s *TransactionService) GetTransactionHistory(userID uuid.UUID, limit int) 
 	return history, nil
 }
 
-//Get TransactionByReference retrieves a transaction by reference
+// Get TransactionByReference retrieves a transaction by reference for the authenticated user.
+func (s *TransactionService) GetTransactionByReference(userID uuid.UUID, reference string) (*models.Transaction, error) {
+	wallet, err := s.walletService.GetWalletByUserID(userID)
+	if err != nil {
+		return nil, err
+	}
 
-func (s *TransactionService) GetTransactionByReference(reference string) (*models.Transaction, error) {
 	var transaction models.Transaction
-	if err := s.db.Where("reference = ?", reference).
+	if err := s.db.Where("reference = ? AND (from_wallet_id = ? OR to_wallet_id = ?)", reference, wallet.ID, wallet.ID).
 		Preload("FromWallet").
 		Preload("ToWallet").
 		First(&transaction).Error; err != nil {

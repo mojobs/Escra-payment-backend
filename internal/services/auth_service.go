@@ -2,43 +2,51 @@ package services
 
 import (
 	"time"
-	"log"
 
 	"github.com/mojobs/lara-payment-backend.git/internal/models"
 	"github.com/mojobs/lara-payment-backend.git/pkg/jwt"
+	"gorm.io/gorm"
 )
 
 type AuthService struct {
-	userService *UserService
-	walletService *WalletService
+	userService             *UserService
+	walletService           *WalletService
 	transactionLimitService *TransactionLimitService
-	jwtService  *jwt.JWTService
+	jwtService              *jwt.JWTService
 }
 
 func NewAuthService(userService *UserService, walletService *WalletService, limitService *TransactionLimitService, jwtService *jwt.JWTService) *AuthService {
 	return &AuthService{
-		userService: userService,
-		walletService : walletService,
+		userService:             userService,
+		walletService:           walletService,
 		transactionLimitService: limitService,
-		jwtService:  jwtService,
+		jwtService:              jwtService,
 	}
 }
 
 func (s *AuthService) Register(req *models.RegisterRequest) (*models.AuthResponse, error) {
-	user, err := s.userService.CreateUser(req)
+	var user *models.User
+
+	err := s.userService.db.Transaction(func(tx *gorm.DB) error {
+		var err error
+		user, err = s.userService.createUser(tx, req)
+		if err != nil {
+			return err
+		}
+
+		// Create wallet for user
+		if _, err = s.walletService.createWallet(tx, user.ID, "NGN"); err != nil {
+			return err
+		}
+
+		// Create default transaction limits
+		if err = s.transactionLimitService.createDefaultLimit(tx, user.ID); err != nil {
+			return err
+		}
+		return nil
+	})
 	if err != nil {
 		return nil, err
-	}
-
-	// Create wallet for user
-	_, err = s.walletService.CreateWallet(user.ID, "NGN")
-	if err != nil {
-		return nil, err
-	}
-
-	//Create default transaction limits 
-	if err := s.transactionLimitService.CreateDefaultLimit(user.ID); err != nil {
-		log.Printf("Failed to create transaction limits: %v", err)
 	}
 
 	//Generate tokens
@@ -58,7 +66,7 @@ func (s *AuthService) Register(req *models.RegisterRequest) (*models.AuthRespons
 			Phone:     user.Phone,
 			FirstName: user.FirstName,
 			LastName:  user.LastName,
-			Email:     user.Email,
+			Email:     userEmail(user),
 			Status:    user.Status,
 		},
 		AccessToken:  accessToken,
@@ -67,7 +75,7 @@ func (s *AuthService) Register(req *models.RegisterRequest) (*models.AuthRespons
 }
 func (s *AuthService) Login(req *models.LoginRequest) (*models.AuthResponse, error) {
 	// Validate user
-	user, err := s.userService.ValidateUser(req.Phone, req.Pin)
+	user, err := s.userService.ValidateUser(req.Phone, req.Password)
 	if err != nil {
 		return nil, err
 	}
@@ -89,9 +97,17 @@ func (s *AuthService) Login(req *models.LoginRequest) (*models.AuthResponse, err
 			FirstName: user.FirstName,
 			LastName:  user.LastName,
 			Phone:     user.Phone,
+			Email:     userEmail(user),
 			Status:    user.Status,
 		},
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}, nil
+}
+
+func userEmail(user *models.User) string {
+	if user.Email == nil {
+		return ""
+	}
+	return *user.Email
 }

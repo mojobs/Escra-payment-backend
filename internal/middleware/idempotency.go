@@ -57,12 +57,22 @@ func IdempotencyMiddleware(idempotencyService *services.IdempotencyService) gin.
 
 		endpoint := c.Request.URL.Path
 
-		//Check if key exists
-		result, err := idempotencyService.CheckKey(idempotencyKey, userID, endpoint)
+		//Read request body before reserving the key so concurrent retries race on the same request hash.
+		var requestBody interface{}
+		var bodyBytes []byte
+		if c.Request.Body != nil {
+			bodyBytes, _ = io.ReadAll(c.Request.Body)
+			c.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+			_ = json.Unmarshal(bodyBytes, &requestBody)
+		}
+		requestHash := services.RequestHash(bodyBytes)
+
+		// Reserve or replay the key.
+		result, err := idempotencyService.ReserveKey(idempotencyKey, userID, endpoint, requestBody, requestHash)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			c.JSON(http.StatusConflict, models.ErrorResponse{
 				Error:   "idempotency_check_failed",
-				Message: "Failed to check idempotency key",
+				Message: err.Error(),
 			})
 			c.Abort()
 			return
@@ -73,14 +83,6 @@ func IdempotencyMiddleware(idempotencyService *services.IdempotencyService) gin.
 			c.JSON(result.StatusCode, result.Response)
 			c.Abort()
 			return
-		}
-
-		//Read request body
-		var requestBody interface{}
-		if c.Request.Body != nil {
-			bodyBytes, _ := io.ReadAll(c.Request.Body)
-			c.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-			json.Unmarshal(bodyBytes, &requestBody)
 		}
 
 		//Wrap response writer to capture response
@@ -94,12 +96,14 @@ func IdempotencyMiddleware(idempotencyService *services.IdempotencyService) gin.
 
 		//Store idempotency key with response (only for successful request)
 
-		if c.Writer.Status() >= 200 && c.Writer.Status() < 300 {
-			var response interface{}
-			json.Unmarshal(writer.body.Bytes(), &response)
+		var response interface{}
+		_ = json.Unmarshal(writer.body.Bytes(), &response)
 
+		if c.Writer.Status() >= 200 && c.Writer.Status() < 300 {
 			idempotencyService.StoreKey(idempotencyKey, userID, endpoint, requestBody, response, c.Writer.Status())
+			return
 		}
 
+		idempotencyService.StoreFailure(idempotencyKey, userID, endpoint, response, c.Writer.Status())
 	}
 }

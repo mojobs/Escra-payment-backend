@@ -5,7 +5,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/mojobs/lara-payment-backend.git/pkg/money"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/mojobs/lara-payment-backend.git/internal/models"
 )
@@ -21,14 +23,18 @@ func NewTransactionLimitService(db *gorm.DB) *TransactionLimitService {
 // CreateDefault Limit creates default limits for a new user
 
 func (s *TransactionLimitService) CreateDefaultLimit(userID uuid.UUID) error {
+	return s.createDefaultLimit(s.db, userID)
+}
+
+func (s *TransactionLimitService) createDefaultLimit(tx *gorm.DB, userID uuid.UUID) error {
 	limit := models.TransactionLimit{
 		UserID:               userID,
-		MaxTransactionAmount: 100000,
-		DailyLimit:           500000,
-		MonthlyLimit:         2000000,
+		MaxTransactionAmount: money.FromMinorUnits(10000000),
+		DailyLimit:           money.FromMinorUnits(50000000),
+		MonthlyLimit:         money.FromMinorUnits(200000000),
 	}
 
-	return s.db.Create(&limit).Error
+	return tx.Create(&limit).Error
 }
 
 // GetUserLimit retrieves user's Transaction Limits
@@ -47,7 +53,7 @@ func (s *TransactionLimitService) GetUserLimIT(userID uuid.UUID) (*models.Transa
 	return &limit, nil
 }
 
-func (s *TransactionLimitService) CheckTransactionLimit(userID uuid.UUID, amount float64) error {
+func (s *TransactionLimitService) CheckTransactionLimit(userID uuid.UUID, amount money.Amount) error {
 	limit, err := s.GetUserLimIT(userID)
 	if err != nil {
 		return err
@@ -59,7 +65,7 @@ func (s *TransactionLimitService) CheckTransactionLimit(userID uuid.UUID, amount
 	}
 
 	//Check daily limit
-	today := time.Now().Truncate(24 * time.Hour)
+	today := dayStart(time.Now().UTC())
 	dailyUsage, err := s.getDailyUsage(userID, today)
 	if err != nil {
 		return err
@@ -80,9 +86,75 @@ func (s *TransactionLimitService) CheckTransactionLimit(userID uuid.UUID, amount
 	return nil
 }
 
+func (s *TransactionLimitService) CheckAndRecordTransaction(tx *gorm.DB, userID uuid.UUID, amount money.Amount) error {
+	var limit models.TransactionLimit
+	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+		Where("user_id = ?", userID).
+		First(&limit).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			if err := s.createDefaultLimit(tx, userID); err != nil {
+				return err
+			}
+			if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+				Where("user_id = ?", userID).
+				First(&limit).Error; err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	}
+
+	if amount > limit.MaxTransactionAmount {
+		return errors.New("amount exceeds maximum limit")
+	}
+
+	now := time.Now().UTC()
+	today := dayStart(now)
+	monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
+	monthEnd := monthStart.AddDate(0, 1, 0)
+
+	var usages []models.TransactionUsage
+	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+		Where("user_id = ? AND date >= ? AND date < ?", userID, monthStart, monthEnd).
+		Find(&usages).Error; err != nil {
+		return err
+	}
+
+	var dailyUsage money.Amount
+	var monthlyUsage money.Amount
+	var todayUsage *models.TransactionUsage
+	for i := range usages {
+		monthlyUsage += usages[i].Amount
+		if usages[i].Date.Equal(today) {
+			dailyUsage = usages[i].Amount
+			todayUsage = &usages[i]
+		}
+	}
+
+	if dailyUsage+amount > limit.DailyLimit {
+		return errors.New("transaction would exceed daily limit")
+	}
+
+	if monthlyUsage+amount > limit.MonthlyLimit {
+		return errors.New("transaction would exceed monthly limit")
+	}
+
+	if todayUsage == nil {
+		usage := models.TransactionUsage{
+			UserID: userID,
+			Date:   today,
+			Amount: amount,
+		}
+		return tx.Create(&usage).Error
+	}
+
+	return tx.Model(todayUsage).Update("amount", todayUsage.Amount+amount).Error
+}
+
 // RecordTransaction records a successful transaction for limit tracking
-func (s *TransactionLimitService) RecordTransaction(userID uuid.UUID, amount float64) error {
-	today := time.Now().Truncate(24 * time.Hour)
+func (s *TransactionLimitService) RecordTransaction(userID uuid.UUID, amount money.Amount) error {
+	today := dayStart(time.Now().UTC())
 
 	var usage models.TransactionUsage
 	err := s.db.Where("user_id = ? AND date = ?", userID, today).First(&usage).Error
@@ -103,7 +175,7 @@ func (s *TransactionLimitService) RecordTransaction(userID uuid.UUID, amount flo
 }
 
 // getDailyUsage gets total usage for a specific day
-func (s *TransactionLimitService) getDailyUsage(userID uuid.UUID, date time.Time) (float64, error) {
+func (s *TransactionLimitService) getDailyUsage(userID uuid.UUID, date time.Time) (money.Amount, error) {
 	var usage models.TransactionUsage
 	err := s.db.Where("user_id = ? AND date = ?", userID, date).First(&usage).Error
 
@@ -116,8 +188,8 @@ func (s *TransactionLimitService) getDailyUsage(userID uuid.UUID, date time.Time
 	return usage.Amount, nil
 }
 
-func (s *TransactionLimitService) getMonthlyUsage(userID uuid.UUID, monthStart time.Time) (float64, error) {
-	var total float64
+func (s *TransactionLimitService) getMonthlyUsage(userID uuid.UUID, monthStart time.Time) (money.Amount, error) {
+	var total money.Amount
 	monthEnd := monthStart.AddDate(0, 1, 0)
 
 	row := s.db.Model(&models.TransactionUsage{}).Select("COALESCE(SUM(amount), 0) as total").Where("user_id = ? AND date >= ? AND date < ?", userID, monthStart, monthEnd).Row()
@@ -134,7 +206,7 @@ func (s *TransactionLimitService) GetUsageStats(userID uuid.UUID) (map[string]in
 		return nil, err
 	}
 
-	today := time.Now().Truncate(24 * time.Hour)
+	today := dayStart(time.Now().UTC())
 	dailyUsage, err := s.getDailyUsage(userID, today)
 	if err != nil {
 		return nil, err
@@ -146,18 +218,22 @@ func (s *TransactionLimitService) GetUsageStats(userID uuid.UUID) (map[string]in
 		return nil, err
 	}
 	return map[string]interface{}{
-		"limits": map[string]float64{
+		"limits": map[string]money.Amount{
 			"per_transaction": limit.MaxTransactionAmount,
 			"daily":           limit.DailyLimit,
 			"monthly":         limit.MonthlyLimit,
 		},
-		"usage": map[string]float64{
+		"usage": map[string]money.Amount{
 			"today":      dailyUsage,
 			"this_month": monthlyUsage,
 		},
-		"remaining": map[string]float64{
+		"remaining": map[string]money.Amount{
 			"today":      limit.DailyLimit - dailyUsage,
 			"this_month": limit.MonthlyLimit - monthlyUsage,
 		},
 	}, nil
+}
+
+func dayStart(t time.Time) time.Time {
+	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
 }

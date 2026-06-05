@@ -1,90 +1,226 @@
-### TEST REGISTER
-POST http://localhost:8080/api/v1/auth/register
+@base_url = http://localhost:8080/api/v1
+@access_token = eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiYzc2ZWQ5OWYtYmExZC00NjI4LTlhNzctMTI5NzJjOGY0MDA4IiwicGhvbmUiOiIwODEwMDAwMDAwMCIsImV4cCI6MTc4MDY5OTYzNywibmJmIjoxNzgwNjk4NzM3LCJpYXQiOjE3ODA2OTg3MzcsImp0aSI6ImNhOWQ4OTc5LTI2NjgtNDQ5MC05NTNmLTIwY2M4NzQ3NzQ3OSJ9.lT1LY24VMBs7D2qzv95bK8ecqco62GNPTTVC_qZUKPMJTODtJQyFw7Dmig5CupPcCbOBCvpHQNnP9V47WS3dQA
+@recipient_wallet_id = paste-recipient-wallet-id-here
+@escrow_reference = paste-escrow-reference-here
+@admin_key = replace-with-admin-api-key
+
+### REGISTER
+POST {{base_url}}/auth/register
 Content-Type: application/json
 
 {
-    "phone": "08104068728",
-    "password": "p1ssw4rd",
-    "first_name": "Fola",
-    "last_name": "Ajibola",
-    "pin": "1100",
-    "email" : "fola.ajibola@example.com"
+  "phone": "08100000000",
+  "password": "securePass123",
+  "first_name": "Fola",
+  "last_name": "Ajibola",
+  "pin": "1100",
+  "email": "fola@example.com"
 }
 
-# {
-#     "phone": "09015780030",
-#     "password": "securePass123",
-#     "first_name": "Mojola",
-#     "last_name": "Ajibola",
-#     "pin": "2910",
-#     "email" : "mojola.ajibola@example.com"
-# }
-
-
-### LOGIN API
-POST http://localhost:8080/api/v1/auth/login
+### LOGIN
+POST {{base_url}}/auth/login
 Content-Type: application/json
 
 {
-    "phone": "09015780030",
-    "password": "securePass123",
-    "pin": "2910" 
-}
-###
-POST http://localhost:8080/api/v1/auth/login
-Content-Type: application/json
-
-{
-    "phone": "08104068728",
-    "password": "p1ssw4rd",
-    "pin": "1100" 
+  "phone": "08100000000",
+  "password": "securePass123"
 }
 
-
-
-###GET BALANCE
-GET http://localhost:8080/api/v1/wallets/balance
-Authorization: Bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiM2YwNjNkMDMtY2E2Yi00OGJhLWI1Y2YtYmEyNDg0YmJkYmM2IiwicGhvbmUiOiIwOTAxNTc4MDAzMCIsImV4cCI6MTc2ODk4OTkxOCwibmJmIjoxNzY4OTg5MDE4LCJpYXQiOjE3Njg5ODkwMTgsImp0aSI6IjhlYTRmYjNiLWNkNzUtNDlmYy1hZGNiLTFjYWQ3ODFlZGQzNyJ9.ANxlcT4lnxIwwP2_RnI5VYvAClp7FANlrqaE-eelMPUjKiIJBNLFPfazGTkfLHGV0QHW6FXA-YX58UpSWZYr3g
+### GET BALANCE
+GET {{base_url}}/wallets/balance
+Authorization: Bearer {{access_token}}
 
 ### GET USER PROFILE
-GET http://localhost:8080/api/v1/users/profile
-Authorization: Bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiM2YwNjNkMDMtY2E2Yi00OGJhLWI1Y2YtYmEyNDg0YmJkYmM2IiwicGhvbmUiOiIwOTAxNTc4MDAzMCIsImV4cCI6MTc2ODk4OTkxOCwibmJmIjoxNzY4OTg5MDE4LCJpYXQiOjE3Njg5ODkwMTgsImp0aSI6IjhlYTRmYjNiLWNkNzUtNDlmYy1hZGNiLTFjYWQ3ODFlZGQzNyJ9.ANxlcT4lnxIwwP2_RnI5VYvAClp7FANlrqaE-eelMPUjKiIJBNLFPfazGTkfLHGV0QHW6FXA-YX58UpSWZYr3g
-
-###
-GET http://localhost:8080/api/v1/users/profile
-Authorization: Bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjY3NTZkMjQtZmJhZC00YWE2LTk5NGUtZmY4YjVlYjBlM2YzIiwicGhvbmUiOiIwODEwNDA2ODcyOCIsImV4cCI6MTc2ODk4OTk4NCwibmJmIjoxNzY4OTg5MDg0LCJpYXQiOjE3Njg5ODkwODQsImp0aSI6ImNiMTBiNWUwLTdmYzYtNDViZC1hMWEzLWRmZWRiYjE2NWFkZSJ9.17T2XY-_j6Iw3nyoCti6GKtzbsRpj5ZEPVVh3kjxB_azhGH34E4pcMy0whamP9hPOvuads0jVOlcuo9elos5Vw
-
-
-### CHECK BALANCE
-GET http://localhost:8080/api/v1/wallets/balance
-Authorization: Bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjY3NTZkMjQtZmJhZC00YWE2LTk5NGUtZmY4YjVlYjBlM2YzIiwicGhvbmUiOiIwODEwNDA2ODcyOCIsImV4cCI6MTc2ODk4OTk4NCwibmJmIjoxNzY4OTg5MDg0LCJpYXQiOjE3Njg5ODkwODQsImp0aSI6ImNiMTBiNWUwLTdmYzYtNDViZC1hMWEzLWRmZWRiYjE2NWFkZSJ9.17T2XY-_j6Iw3nyoCti6GKtzbsRpj5ZEPVVh3kjxB_azhGH34E4pcMy0whamP9hPOvuads0jVOlcuo9elos5Vw
-
+GET {{base_url}}/users/profile
+Authorization: Bearer {{access_token}}
 
 ### TRANSFER
-POST http://localhost:8080/api/v1/transactions/transfer
-Authorization: Bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiM2YwNjNkMDMtY2E2Yi00OGJhLWI1Y2YtYmEyNDg0YmJkYmM2IiwicGhvbmUiOiIwOTAxNTc4MDAzMCIsImV4cCI6MTc2ODk4OTkxOCwibmJmIjoxNzY4OTg5MDE4LCJpYXQiOjE3Njg5ODkwMTgsImp0aSI6IjhlYTRmYjNiLWNkNzUtNDlmYy1hZGNiLTFjYWQ3ODFlZGQzNyJ9.ANxlcT4lnxIwwP2_RnI5VYvAClp7FANlrqaE-eelMPUjKiIJBNLFPfazGTkfLHGV0QHW6FXA-YX58UpSWZYr3g
-Idempotency-Key : 83947ab1-a735-43d3-88b0-11d52d48fng3
+POST {{base_url}}/transactions/transfer
+Authorization: Bearer {{access_token}}
+Idempotency-Key: {{$guid}}
 Content-Type: application/json
 
 {
-    "wallet_id": "83947ab1-a735-43d3-88b0-11d52d48fda8",
-    "amount": 10000,
-    "description": "Limit Test",
-    "pin": "2910"
+  "wallet_id": "{{recipient_wallet_id}}",
+  "amount_kobo": 100000,
+  "description": "Test transfer",
+  "pin": "1100"
 }
 
-###
-POST http://localhost:8080/api/v1/transactions/transfer
-Authorization: Bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiM2YwNjNkMDMtY2E2Yi00OGJhLWI1Y2YtYmEyNDg0YmJkYmM2IiwicGhvbmUiOiIwOTAxNTc4MDAzMCIsImV4cCI6MTc2ODk4OTkxOCwibmJmIjoxNzY4OTg5MDE4LCJpYXQiOjE3Njg5ODkwMTgsImp0aSI6IjhlYTRmYjNiLWNkNzUtNDlmYy1hZGNiLTFjYWQ3ODFlZGQzNyJ9.ANxlcT4lnxIwwP2_RnI5VYvAClp7FANlrqaE-eelMPUjKiIJBNLFPfazGTkfLHGV0QHW6FXA-YX58UpSWZYr3g
-Idempotency-Key : 550e8400-e29b-41d4-a716-446655440011
+### LIMITS
+GET {{base_url}}/limits
+Authorization: Bearer {{access_token}}
+
+### KORA BANKS
+GET {{base_url}}/providers/kora/banks?countryCode=NG
+Authorization: Bearer {{access_token}}
+
+### KORA RESOLVE BANK ACCOUNT
+GET {{base_url}}/providers/kora/banks/resolve?bank_code=044&account_number=0123456789&currency=NG
+Authorization: Bearer sk_test_z6W14giS2d94QcqhBH1AmTAWrHTHTmdBazExqLRu
+
+### KORA BANK PAYOUT
+POST {{base_url}}/providers/kora/payouts/bank
+Authorization: Bearer {{access_token}}
+Idempotency-Key: {{$guid}}
 Content-Type: application/json
 
 {
-    "wallet_id": "83947ab1-a735-43d3-88b0-11d52d48fda8",
-    "amount": 1000,
-    "description": "Test Idempotency",
-    "pin": "2910"
+  "bank_code": "044",
+  "account_number": "0123456789",
+  "account_name": "Ada Lovelace",
+  "customer_email": "ada@example.com",
+  "amount_kobo": 100000,
+  "currency": "NGN",
+  "narration": "Bank withdrawal",
+  "pin": "1100"
 }
-###
-GET http://localhost:8080/api/v1/limits
-Authorization: Bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiM2YwNjNkMDMtY2E2Yi00OGJhLWI1Y2YtYmEyNDg0YmJkYmM2IiwicGhvbmUiOiIwOTAxNTc4MDAzMCIsImV4cCI6MTc2ODk4OTkxOCwibmJmIjoxNzY4OTg5MDE4LCJpYXQiOjE3Njg5ODkwMTgsImp0aSI6IjhlYTRmYjNiLWNkNzUtNDlmYy1hZGNiLTFjYWQ3ODFlZGQzNyJ9.ANxlcT4lnxIwwP2_RnI5VYvAClp7FANlrqaE-eelMPUjKiIJBNLFPfazGTkfLHGV0QHW6FXA-YX58UpSWZYr3g
+
+### QUIDAX CRYPTO WITHDRAWAL
+POST {{base_url}}/providers/quidax/withdrawals
+Authorization: Bearer {{access_token}}
+Idempotency-Key: {{$guid}}
+Content-Type: application/json
+
+{
+  "currency": "usdt",
+  "amount": "5.25",
+  "fund_uid": "recipient-wallet-address",
+  "network": "trc20",
+  "transaction_note": "Crypto withdrawal",
+  "pin": "1100"
+}
+
+### CREATE ESCROW ORDER
+POST {{base_url}}/escrows/orders
+Authorization: Bearer {{access_token}}
+Idempotency-Key: {{$guid}}
+Content-Type: application/json
+
+{
+  "title": "Instagram preorder sneaker",
+  "description": "Buyer pays into escrow before dispatch",
+  "amount_kobo": 150000,
+  "currency": "NGN",
+  "sales_channel": "INSTAGRAM",
+  "delivery_mode": "PHYSICAL",
+  "buyer_confirmation_ttl_hours": 48
+}
+
+### LIST ESCROW ORDERS
+GET {{base_url}}/escrows/orders
+Authorization: Bearer {{access_token}}
+
+### GET ESCROW ORDER
+GET {{base_url}}/escrows/orders/{{escrow_reference}}
+Authorization: Bearer {{access_token}}
+
+### GET PUBLIC ESCROW ORDER
+GET {{base_url}}/public/escrows/orders/{{escrow_reference}}
+
+### INITIATE ESCROW CHECKOUT WITH KORA
+POST {{base_url}}/escrows/orders/{{escrow_reference}}/checkout/kora
+Authorization: Bearer {{access_token}}
+Idempotency-Key: {{$guid}}
+Content-Type: application/json
+
+{
+  "redirect_url": "https://escra.app/checkout/return",
+  "notification_url": "https://your-public-api.example.com/api/v1/webhooks/kora",
+  "channels": ["bank_transfer", "card"],
+  "default_channel": "bank_transfer",
+  "merchant_bears_cost": true
+}
+
+### FUND ESCROW ORDER
+POST {{base_url}}/escrows/orders/{{escrow_reference}}/fund
+Authorization: Bearer {{access_token}}
+Idempotency-Key: {{$guid}}
+Content-Type: application/json
+
+{
+  "pin": "1100"
+}
+
+### MARK ESCROW SHIPPED
+POST {{base_url}}/escrows/orders/{{escrow_reference}}/ship
+Authorization: Bearer {{access_token}}
+Idempotency-Key: {{$guid}}
+Content-Type: application/json
+
+{
+  "tracking_reference": "WAYBILL-12345",
+  "delivery_proof_url": "https://example.com/proof.jpg",
+  "note": "Dispatched with rider"
+}
+
+### MARK ESCROW DELIVERED
+POST {{base_url}}/escrows/orders/{{escrow_reference}}/mark-delivered
+Authorization: Bearer {{access_token}}
+Idempotency-Key: {{$guid}}
+Content-Type: application/json
+
+{
+  "delivery_proof_url": "https://example.com/proof.jpg",
+  "note": "Package delivered to buyer"
+}
+
+### CONFIRM ESCROW DELIVERY
+POST {{base_url}}/escrows/orders/{{escrow_reference}}/confirm-delivery
+Authorization: Bearer {{access_token}}
+Idempotency-Key: {{$guid}}
+Content-Type: application/json
+
+{
+  "pin": "1100"
+}
+
+### OPEN ESCROW DISPUTE
+POST {{base_url}}/escrows/orders/{{escrow_reference}}/dispute
+Authorization: Bearer {{access_token}}
+Idempotency-Key: {{$guid}}
+Content-Type: application/json
+
+{
+  "reason": "Item not delivered",
+  "details": "Seller has not delivered within the agreed time",
+  "evidence_url": "https://example.com/dispute-proof.jpg"
+}
+
+### AUTO RELEASE ESCROW AFTER DEADLINE
+POST {{base_url}}/escrows/orders/{{escrow_reference}}/release
+Authorization: Bearer {{access_token}}
+Idempotency-Key: {{$guid}}
+Content-Type: application/json
+
+{}
+
+### REFUND ESCROW ORDER
+POST {{base_url}}/escrows/orders/{{escrow_reference}}/refund
+Authorization: Bearer {{access_token}}
+Idempotency-Key: {{$guid}}
+Content-Type: application/json
+
+{
+  "reason": "Seller approved refund after dispute"
+}
+
+### ADMIN RESOLVE DISPUTE - RELEASE
+POST {{base_url}}/admin/escrows/orders/{{escrow_reference}}/resolve-dispute
+X-Admin-Key: {{admin_key}}
+Content-Type: application/json
+
+{
+  "action": "RELEASE",
+  "resolution_note": "Admin reviewed evidence and released seller payout"
+}
+
+### ADMIN RESOLVE DISPUTE - REFUND
+POST {{base_url}}/admin/escrows/orders/{{escrow_reference}}/resolve-dispute
+X-Admin-Key: {{admin_key}}
+Content-Type: application/json
+
+{
+  "action": "REFUND",
+  "resolution_note": "Admin reviewed evidence and refunded buyer"
+}

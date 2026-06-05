@@ -24,7 +24,7 @@ func (ctrl *LimitController) GetLimits(c *gin.Context) {
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{
-			Error: "invalid_user_id",
+			Error:   "invalid_user_id",
 			Message: "Invalid user ID format",
 		})
 		return
@@ -33,8 +33,8 @@ func (ctrl *LimitController) GetLimits(c *gin.Context) {
 	stats, err := ctrl.limitService.GetUsageStats(userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
-			Error : "fetch_failed",
-			Message : err.Error(),
+			Error:   "fetch_failed",
+			Message: err.Error(),
 		})
 		return
 	}

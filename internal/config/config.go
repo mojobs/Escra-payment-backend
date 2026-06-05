@@ -22,22 +22,30 @@ type Config struct {
 	JWTExpiration          string
 	RefreshTokenExpiration string
 	Environment            string
+	PublicBaseURL          string
+	AdminAPIKey            string
+	KoraBaseURL            string
+	KoraSecretKey          string
+	KoraWebhookSecret      string
+	QuidaxBaseURL          string
+	QuidaxSecretKey        string
+	QuidaxWebhookSecret    string
 }
 
 func LoadConfig() *Config {
 	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env file")
+		log.Println("No .env file found; using process environment")
 	}
 	jwt_secret := os.Getenv("JWT_SECRET")
 	if jwt_secret == "" {
-		log.Fatal("JWT SECRET is in env file")
+		log.Fatal("JWT_SECRET is required")
 	}
 	return &Config{
 		Port:                   getEnv("PORT", "8080"),
 		DBHost:                 getEnv("DB_HOST", "localhost"),
 		DBPort:                 getEnv("DB_PORT", "5432"),
 		DBUser:                 getEnv("DB_USER", "payment_user"),
-		DBPassword:             getEnv("DB_PASSWORD", "p1ssw4rd"),
+		DBPassword:             getEnv("DB_PASSWORD", ""),
 		DBName:                 getEnv("DB_NAME", "payment_app_dev"),
 		DBSSLMode:              getEnv("DB_SSLMODE", "disable"),
 		RedisHost:              getEnv("REDIS_HOST", "localhost"),
@@ -47,6 +55,14 @@ func LoadConfig() *Config {
 		JWTExpiration:          getEnv("JWT_EXPIRATION", "15m"),
 		RefreshTokenExpiration: getEnv("REFRESH_TOKEN_EXPIRATION", "168h"),
 		Environment:            getEnv("ENVIRONMENT", "development"),
+		PublicBaseURL:          getEnv("PUBLIC_BASE_URL", ""),
+		AdminAPIKey:            getEnv("ADMIN_API_KEY", ""),
+		KoraBaseURL:            getEnv("KORA_BASE_URL", "https://api.korapay.com"),
+		KoraSecretKey:          getEnv("KORA_SECRET_KEY", ""),
+		KoraWebhookSecret:      getEnv("KORA_WEBHOOK_SECRET", ""),
+		QuidaxBaseURL:          getEnv("QUIDAX_BASE_URL", "https://openapi.quidax.io/exchange-open-api/v1"),
+		QuidaxSecretKey:        getEnv("QUIDAX_SECRET_KEY", ""),
+		QuidaxWebhookSecret:    getEnv("QUIDAX_WEBHOOK_SECRET", ""),
 	}
 }
 

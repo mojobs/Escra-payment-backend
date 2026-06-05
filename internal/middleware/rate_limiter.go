@@ -20,7 +20,7 @@ func RateLimiterMiddleware() gin.HandlerFunc {
 	})
 
 	if err != nil {
-		panic(err)
+		return rateLimiterUnavailable()
 	}
 
 	rate := limiter.Rate{
@@ -39,7 +39,7 @@ func StrictRateLimiterMiddleware() gin.HandlerFunc {
 		MaxRetry: 3,
 	})
 	if err != nil {
-		panic(err)
+		return rateLimiterUnavailable()
 	}
 	rate := limiter.Rate{
 		Period: 1 * time.Minute,
@@ -78,7 +78,7 @@ func UserRateLimiterMiddleware() gin.HandlerFunc {
 		MaxRetry: 3,
 	})
 	if err != nil {
-		panic(err)
+		return rateLimiterUnavailable()
 	}
 
 	rate := limiter.Rate{
@@ -116,5 +116,15 @@ func UserRateLimiterMiddleware() gin.HandlerFunc {
 			return
 		}
 		c.Next()
+	}
+}
+
+func rateLimiterUnavailable() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.JSON(http.StatusServiceUnavailable, models.ErrorResponse{
+			Error:   "rate_limiter_unavailable",
+			Message: "Rate limiter is temporarily unavailable",
+		})
+		c.Abort()
 	}
 }

@@ -19,9 +19,18 @@ func NewUserService(db *gorm.DB) *UserService {
 }
 
 func (s *UserService) CreateUser(req *models.RegisterRequest) (*models.User, error) {
+	return s.createUser(s.db, req)
+}
+
+func (s *UserService) createUser(tx *gorm.DB, req *models.RegisterRequest) (*models.User, error) {
 	var existingUser models.User
-	if err := s.db.Where("phone = ?", req.Phone).First(&existingUser).Error; err == nil {
+	if err := tx.Where("phone = ?", req.Phone).First(&existingUser).Error; err == nil {
 		return nil, errors.New("Phone number already registered")
+	}
+
+	hashedPassword, err := utils.HashPassword(req.Password)
+	if err != nil {
+		return nil, err
 	}
 
 	hashedPin, err := utils.HashPassword(req.Pin)
@@ -29,17 +38,22 @@ func (s *UserService) CreateUser(req *models.RegisterRequest) (*models.User, err
 		return nil, err
 	}
 
+	var email *string
+	if req.Email != "" {
+		email = &req.Email
+	}
+
 	user := &models.User{
 		Phone:     req.Phone,
-		Password:  req.Password,
+		Password:  hashedPassword,
 		PinHash:   hashedPin,
 		FirstName: req.FirstName,
 		LastName:  req.LastName,
-		Email:     req.Email,
+		Email:     email,
 		Status:    "ACTIVE",
 	}
 
-	if err := s.db.Create(user).Error; err != nil {
+	if err := tx.Create(user).Error; err != nil {
 		return nil, err
 	}
 
@@ -65,10 +79,13 @@ func (s *UserService) GetUserByWallet(walletID string) (*models.User, error) {
 		}
 		return nil, err
 	}
+	if wallet.UserID == nil {
+		return nil, errors.New("wallet is not owned by a user")
+	}
 
 	// Then, find the user by the wallet's UserID and preload the wallet
 	var user models.User
-	if err := s.db.Where("id = ?", wallet.UserID).Preload("Wallet").First(&user).Error; err != nil {
+	if err := s.db.Where("id = ?", *wallet.UserID).Preload("Wallet").First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("user not found")
 		}
@@ -88,7 +105,7 @@ func (s *UserService) GetUserByID(id string) (*models.User, error) {
 	return &user, nil
 }
 
-func (s *UserService) ValidateUser(phone, pin string) (*models.User, error) {
+func (s *UserService) ValidateUser(phone, password string) (*models.User, error) {
 	user, err := s.GetUserByPhone(phone)
 	if err != nil {
 		return nil, err
@@ -108,14 +125,14 @@ func (s *UserService) ValidateUser(phone, pin string) (*models.User, error) {
 		}
 	}
 
-	// Validate PIN
-	if err := utils.CheckPassword(user.PinHash, pin); err != nil {
+	// Validate password
+	if err := utils.CheckPassword(user.Password, password); err != nil {
 		// Increment failed attempts
 		user.FailedLoginAttempts++
 		now := time.Now()
 		user.LastFailedLoginAt = &now
 		s.db.Save(user)
-		return nil, errors.New("invalid pin")
+		return nil, errors.New("invalid credentials")
 	}
 
 	// Reset failed attempts on successful login

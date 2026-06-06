@@ -104,6 +104,10 @@ func (s *WebhookService) applyProviderWebhook(input WebhookInput) error {
 			"status":           status,
 			"response_payload": input.Payload,
 		}
+		if input.EventID != "" && providerTx.ExternalReference == "" {
+			updates["external_reference"] = input.EventID
+			providerTx.ExternalReference = input.EventID
+		}
 
 		if amountText := stringFromWebhook(input.Payload, "amount"); amountText != "" {
 			if providerTx.Provider == "kora" {
@@ -124,8 +128,18 @@ func (s *WebhookService) applyProviderWebhook(input WebhookInput) error {
 			return err
 		}
 
-		if providerTx.Type == "ESCROW_PAYIN" && providerTx.EscrowOrderID != nil && status == "SUCCESS" && s.escrowService != nil {
+		if (providerTx.Type == "ESCROW_PAYIN" || providerTx.Type == "ESCROW_VIRTUAL_ACCOUNT") && providerTx.EscrowOrderID != nil && status == "SUCCESS" && s.escrowService != nil {
 			if err := s.escrowService.FundOrderFromProviderTx(tx, *providerTx.EscrowOrderID, &providerTx); err != nil {
+				return err
+			}
+		}
+		if providerTx.Type == "ESCROW_VIRTUAL_ACCOUNT" {
+			if err := tx.Model(&models.KoraVirtualAccount{}).
+				Where("provider_tx_id = ? OR account_reference = ?", providerTx.ID, providerTx.Reference).
+				Updates(map[string]interface{}{
+					"status":           status,
+					"response_payload": input.Payload,
+				}).Error; err != nil {
 				return err
 			}
 		}

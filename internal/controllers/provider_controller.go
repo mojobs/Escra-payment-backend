@@ -60,6 +60,117 @@ func (ctrl *ProviderController) ResolveKoraBankAccount(c *gin.Context) {
 	})
 }
 
+func (ctrl *ProviderController) VerifyKoraIdentity(c *gin.Context) {
+	userID, ok := authenticatedUserID(c)
+	if !ok {
+		return
+	}
+
+	var req models.KoraVerifyIdentityRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Error:   "validation_error",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	response, err := ctrl.providerService.VerifyKoraIdentity(c.Request.Context(), userID, &req)
+	if err != nil {
+		c.JSON(http.StatusBadGateway, models.ErrorResponse{
+			Error:   "kora_kyc_failed",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+func (ctrl *ProviderController) CreateKoraVirtualAccount(c *gin.Context) {
+	userID, ok := authenticatedUserID(c)
+	if !ok {
+		return
+	}
+
+	var req models.KoraVirtualAccountRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Error:   "validation_error",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	account, err := ctrl.providerService.CreateKoraVirtualAccount(c.Request.Context(), userID, &req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Error:   "kora_virtual_account_failed",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusAccepted, account)
+}
+
+func (ctrl *ProviderController) ListKoraVirtualAccounts(c *gin.Context) {
+	userID, ok := authenticatedUserID(c)
+	if !ok {
+		return
+	}
+
+	accounts, err := ctrl.providerService.ListKoraVirtualAccounts(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Error:   "kora_virtual_accounts_failed",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":  true,
+		"accounts": accounts,
+		"count":    len(accounts),
+	})
+}
+
+func (ctrl *ProviderController) GetKoraBalances(c *gin.Context) {
+	balances, err := ctrl.providerService.GetKoraBalances(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusBadGateway, models.ErrorResponse{
+			Error:   "kora_balances_failed",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, balances)
+}
+
+func (ctrl *ProviderController) InitiateKoraRefund(c *gin.Context) {
+	var req models.KoraRefundRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Error:   "validation_error",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	providerTx, err := ctrl.providerService.InitiateKoraRefund(c.Request.Context(), &req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Error:   "kora_refund_failed",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusAccepted, providerTransactionResponse(providerTx))
+}
+
 func (ctrl *ProviderController) InitiateKoraBankPayout(c *gin.Context) {
 	userID, ok := authenticatedUserID(c)
 	if !ok {

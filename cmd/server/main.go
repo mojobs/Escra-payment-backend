@@ -30,7 +30,7 @@ func main() {
 
 	db := database.GetDB()
 
-	if err := db.AutoMigrate(&models.User{}, &models.Wallet{}, &models.Transaction{}, &models.LedgerEntry{}, &models.IdempotencyKey{}, &models.TransactionLimit{}, &models.TransactionUsage{}, &models.ProviderTransaction{}, &models.WebhookEvent{}, &models.AuditLog{}, &models.EscrowOrder{}, &models.EscrowEvent{}, &models.EscrowDispute{}); err != nil {
+	if err := db.AutoMigrate(&models.User{}, &models.Wallet{}, &models.Transaction{}, &models.LedgerEntry{}, &models.IdempotencyKey{}, &models.TransactionLimit{}, &models.TransactionUsage{}, &models.ProviderTransaction{}, &models.WebhookEvent{}, &models.KoraVirtualAccount{}, &models.AuditLog{}, &models.EscrowOrder{}, &models.EscrowEvent{}, &models.EscrowDispute{}); err != nil {
 		log.Fatal("Failed to migrate database: ", err)
 	}
 
@@ -55,7 +55,7 @@ func main() {
 		userService,
 		walletService,
 		limitService,
-		kora.NewClient(cfg.KoraBaseURL, cfg.KoraSecretKey),
+		kora.NewClient(cfg.KoraBaseURL, cfg.KoraPublicKey, cfg.KoraSecretKey),
 		quidax.NewClient(cfg.QuidaxBaseURL, cfg.QuidaxSecretKey),
 	)
 	webhookService := services.NewWebhookService(db, escrowService)
@@ -112,6 +112,7 @@ func main() {
 		admin.Use(middleware.AdminAPIKeyMiddleware(cfg.AdminAPIKey))
 		{
 			admin.POST("/escrows/orders/:reference/resolve-dispute", escrowController.ResolveDispute)
+			admin.POST("/providers/kora/refunds", providerController.InitiateKoraRefund)
 		}
 
 		// Protected routes
@@ -165,8 +166,12 @@ func main() {
 			{
 				koraRoutes := providers.Group("/kora")
 				{
+					koraRoutes.POST("/kyc/verify", middleware.StrictRateLimiterMiddleware(), providerController.VerifyKoraIdentity)
 					koraRoutes.GET("/banks", providerController.ListKoraBanks)
 					koraRoutes.GET("/banks/resolve", providerController.ResolveKoraBankAccount)
+					koraRoutes.GET("/balances", providerController.GetKoraBalances)
+					koraRoutes.POST("/virtual-accounts", middleware.StrictRateLimiterMiddleware(), providerController.CreateKoraVirtualAccount)
+					koraRoutes.GET("/virtual-accounts", providerController.ListKoraVirtualAccounts)
 					koraRoutes.POST("/payouts/bank", middleware.StrictRateLimiterMiddleware(), providerController.InitiateKoraBankPayout)
 				}
 

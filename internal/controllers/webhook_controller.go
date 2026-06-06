@@ -103,6 +103,9 @@ func parseWebhookEnvelope(body []byte) webhookEnvelope {
 	}
 
 	if data, ok := payload["data"].(map[string]interface{}); ok {
+		if virtualReference := nestedStringField(data, "virtual_bank_account_details", "virtual_bank_account", "account_reference"); virtualReference != "" {
+			envelope.Reference = virtualReference
+		}
 		if envelope.Reference == "" {
 			envelope.Reference = stringField(data, "reference", "payment_reference", "transaction_reference")
 		}
@@ -123,6 +126,21 @@ func stringField(payload map[string]interface{}, keys ...string) string {
 		if value, ok := payload[key].(string); ok && value != "" {
 			return value
 		}
+	}
+	return ""
+}
+
+func nestedStringField(payload map[string]interface{}, keys ...string) string {
+	var current interface{} = payload
+	for _, key := range keys {
+		asMap, ok := current.(map[string]interface{})
+		if !ok {
+			return ""
+		}
+		current = asMap[key]
+	}
+	if value, ok := current.(string); ok {
+		return value
 	}
 	return ""
 }

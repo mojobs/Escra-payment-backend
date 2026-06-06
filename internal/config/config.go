@@ -25,6 +25,7 @@ type Config struct {
 	PublicBaseURL          string
 	AdminAPIKey            string
 	KoraBaseURL            string
+	KoraPublicKey          string
 	KoraSecretKey          string
 	KoraWebhookSecret      string
 	QuidaxBaseURL          string
@@ -58,6 +59,7 @@ func LoadConfig() *Config {
 		PublicBaseURL:          getEnv("PUBLIC_BASE_URL", ""),
 		AdminAPIKey:            getEnv("ADMIN_API_KEY", ""),
 		KoraBaseURL:            getEnv("KORA_BASE_URL", "https://api.korapay.com"),
+		KoraPublicKey:          getEnv("KORA_PUBLIC_KEY", ""),
 		KoraSecretKey:          getEnv("KORA_SECRET_KEY", ""),
 		KoraWebhookSecret:      getEnv("KORA_WEBHOOK_SECRET", ""),
 		QuidaxBaseURL:          getEnv("QUIDAX_BASE_URL", "https://openapi.quidax.io/exchange-open-api/v1"),

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -20,11 +21,21 @@ const defaultBaseURL = "https://api.korapay.com"
 type Client struct {
 	baseURL    string
 	base       *url.URL
+	publicKey  string
 	secretKey  string
 	httpClient *http.Client
 }
 
-func NewClient(baseURL, secretKey string) *Client {
+type HTTPError struct {
+	StatusCode int
+	Body       string
+}
+
+func (e *HTTPError) Error() string {
+	return fmt.Sprintf("kora request failed with status %d: %s", e.StatusCode, e.Body)
+}
+
+func NewClient(baseURL, publicKey, secretKey string) *Client {
 	if baseURL == "" {
 		baseURL = defaultBaseURL
 	}
@@ -36,6 +47,7 @@ func NewClient(baseURL, secretKey string) *Client {
 	return &Client{
 		baseURL:   trimmed,
 		base:      parsed,
+		publicKey: publicKey,
 		secretKey: secretKey,
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
@@ -75,6 +87,65 @@ type CheckoutResponse struct {
 	CheckoutURL string          `json:"checkout_url"`
 	Status      string          `json:"status"`
 	Raw         json.RawMessage `json:"raw"`
+}
+
+type VerifyIdentityRequest struct {
+	IDNumber string
+	IDType   string
+}
+
+type VerifyIdentityResponse struct {
+	Reference string          `json:"reference"`
+	Status    string          `json:"status"`
+	Message   string          `json:"message"`
+	Raw       json.RawMessage `json:"raw"`
+}
+
+type VirtualAccountRequest struct {
+	AccountName      string
+	AccountReference string
+	BankCode         string
+	Currency         string
+	IDNumber         string
+	IDType           string
+	Permanent        bool
+	CustomerName     string
+	CustomerEmail    string
+}
+
+type VirtualAccountResponse struct {
+	AccountReference   string          `json:"account_reference"`
+	AccountName        string          `json:"account_name"`
+	AccountNumber      string          `json:"account_number"`
+	BankCode           string          `json:"bank_code"`
+	BankName           string          `json:"bank_name"`
+	Currency           string          `json:"currency"`
+	Status             string          `json:"status"`
+	ProviderCustomerID string          `json:"provider_customer_id,omitempty"`
+	Raw                json.RawMessage `json:"raw"`
+}
+
+type Balance struct {
+	Currency         string
+	AvailableBalance money.Amount
+	PendingBalance   money.Amount
+	RawAvailable     string
+	RawPending       string
+}
+
+type RefundRequest struct {
+	Reference        string
+	PaymentReference string
+	Amount           money.Amount
+	Currency         string
+	Reason           string
+}
+
+type RefundResponse struct {
+	Reference         string          `json:"reference"`
+	Status            string          `json:"status"`
+	ExternalReference string          `json:"external_reference,omitempty"`
+	Raw               json.RawMessage `json:"raw"`
 }
 
 type payoutPayload struct {
@@ -243,6 +314,202 @@ func (c *Client) InitializeCheckout(ctx context.Context, req CheckoutRequest) (*
 	return response, nil
 }
 
+func (c *Client) VerifyIdentity(ctx context.Context, req VerifyIdentityRequest) (*VerifyIdentityResponse, error) {
+	idType := strings.ToLower(strings.TrimSpace(req.IDType))
+	if idType == "" {
+		idType = "bvn"
+	}
+
+	payload := map[string]string{
+		idType: req.IDNumber,
+	}
+
+	var raw json.RawMessage
+	if err := c.postSecretFirst(ctx, []string{
+		"/merchant/api/v1/identities/" + idType,
+		"/merchant/api/v1/identities/ng/" + idType,
+		"/merchant/api/v1/identity/" + idType,
+	}, payload, &raw); err != nil {
+		return nil, err
+	}
+
+	response := &VerifyIdentityResponse{
+		Status: "verified",
+		Raw:    raw,
+	}
+
+	var envelope struct {
+		Status  interface{} `json:"status"`
+		Message string      `json:"message"`
+		Data    struct {
+			Reference string `json:"reference"`
+			Status    string `json:"status"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(raw, &envelope); err == nil {
+		response.Message = envelope.Message
+		response.Status = firstNonEmpty(envelope.Data.Status, providerStatusString(envelope.Status), response.Status)
+		response.Reference = envelope.Data.Reference
+	}
+
+	return response, nil
+}
+
+func (c *Client) CreateVirtualAccount(ctx context.Context, req VirtualAccountRequest) (*VirtualAccountResponse, error) {
+	type virtualAccountPayload struct {
+		AccountName      string                 `json:"account_name"`
+		AccountReference string                 `json:"account_reference"`
+		BankCode         string                 `json:"bank_code,omitempty"`
+		Currency         string                 `json:"currency"`
+		Permanent        bool                   `json:"permanent"`
+		Customer         map[string]string      `json:"customer"`
+		KYC              map[string]string      `json:"kyc"`
+		Meta             map[string]interface{} `json:"metadata,omitempty"`
+	}
+
+	idType := strings.ToLower(strings.TrimSpace(req.IDType))
+	payload := virtualAccountPayload{
+		AccountName:      req.AccountName,
+		AccountReference: req.AccountReference,
+		BankCode:         req.BankCode,
+		Currency:         req.Currency,
+		Permanent:        req.Permanent,
+		Customer: map[string]string{
+			"name":  req.CustomerName,
+			"email": req.CustomerEmail,
+		},
+		KYC: map[string]string{
+			idType: req.IDNumber,
+		},
+	}
+
+	var raw json.RawMessage
+	if err := c.postSecretFirst(ctx, []string{
+		"/merchant/api/v1/virtual-bank-account",
+		"/merchant/api/v1/virtual-bank-accounts",
+	}, payload, &raw); err != nil {
+		return nil, err
+	}
+
+	response := &VirtualAccountResponse{
+		AccountReference: req.AccountReference,
+		AccountName:      req.AccountName,
+		Currency:         req.Currency,
+		Status:           "ACTIVE",
+		Raw:              raw,
+	}
+
+	var envelope struct {
+		Status  interface{} `json:"status"`
+		Message string      `json:"message"`
+		Data    struct {
+			AccountReference string `json:"account_reference"`
+			AccountName      string `json:"account_name"`
+			AccountNumber    string `json:"account_number"`
+			AccountNumber2   string `json:"accountNumber"`
+			BankCode         string `json:"bank_code"`
+			BankName         string `json:"bank_name"`
+			Currency         string `json:"currency"`
+			Status           string `json:"status"`
+			Customer         struct {
+				ID string `json:"id"`
+			} `json:"customer"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(raw, &envelope); err == nil {
+		response.Status = firstNonEmpty(envelope.Data.Status, providerStatusString(envelope.Status), response.Status)
+		response.AccountReference = firstNonEmpty(envelope.Data.AccountReference, response.AccountReference)
+		response.AccountName = firstNonEmpty(envelope.Data.AccountName, response.AccountName)
+		response.AccountNumber = firstNonEmpty(envelope.Data.AccountNumber, envelope.Data.AccountNumber2)
+		response.BankCode = envelope.Data.BankCode
+		response.BankName = envelope.Data.BankName
+		response.Currency = firstNonEmpty(envelope.Data.Currency, response.Currency)
+		response.ProviderCustomerID = envelope.Data.Customer.ID
+	}
+
+	return response, nil
+}
+
+func (c *Client) GetBalances(ctx context.Context) ([]Balance, error) {
+	var raw json.RawMessage
+	if err := c.getSecretFirst(ctx, []string{
+		"/merchant/api/v1/balances",
+		"/merchant/api/v1/balance",
+	}, &raw); err != nil {
+		return nil, err
+	}
+
+	var envelope struct {
+		Data []struct {
+			Currency         string      `json:"currency"`
+			AvailableBalance interface{} `json:"available_balance"`
+			Balance          interface{} `json:"balance"`
+			PendingBalance   interface{} `json:"pending_balance"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(raw, &envelope); err != nil {
+		return nil, err
+	}
+
+	balances := make([]Balance, 0, len(envelope.Data))
+	for _, item := range envelope.Data {
+		availableRaw := valueToString(firstNonNil(item.AvailableBalance, item.Balance))
+		pendingRaw := valueToString(item.PendingBalance)
+		available, _ := money.ParseDecimal(defaultDecimal(availableRaw))
+		pending, _ := money.ParseDecimal(defaultDecimal(pendingRaw))
+		balances = append(balances, Balance{
+			Currency:         item.Currency,
+			AvailableBalance: available,
+			PendingBalance:   pending,
+			RawAvailable:     availableRaw,
+			RawPending:       pendingRaw,
+		})
+	}
+	return balances, nil
+}
+
+func (c *Client) RequestRefund(ctx context.Context, req RefundRequest) (*RefundResponse, error) {
+	payload := map[string]interface{}{
+		"reference":         req.Reference,
+		"payment_reference": req.PaymentReference,
+		"amount":            json.Number(req.Amount.String()),
+		"currency":          req.Currency,
+		"reason":            req.Reason,
+	}
+
+	var raw json.RawMessage
+	if err := c.postSecretFirst(ctx, []string{
+		"/merchant/api/v1/transactions/refund",
+		"/merchant/api/v1/transactions/refunds",
+		"/merchant/api/v1/refunds",
+		"/merchant/api/v1/transactions/reverse",
+	}, payload, &raw); err != nil {
+		return nil, err
+	}
+
+	response := &RefundResponse{
+		Reference: req.Reference,
+		Status:    "processing",
+		Raw:       raw,
+	}
+	var envelope struct {
+		Status interface{} `json:"status"`
+		Data   struct {
+			Reference string `json:"reference"`
+			Status    string `json:"status"`
+			TraceID   string `json:"trace_id"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(raw, &envelope); err == nil {
+		response.Status = firstNonEmpty(envelope.Data.Status, providerStatusString(envelope.Status), response.Status)
+		response.ExternalReference = envelope.Data.TraceID
+		if envelope.Data.Reference != "" {
+			response.Reference = envelope.Data.Reference
+		}
+	}
+	return response, nil
+}
+
 func (c *Client) ListBanks(ctx context.Context, countryCode string) ([]Bank, error) {
 	if countryCode == "" {
 		countryCode = "NG"
@@ -254,7 +521,7 @@ func (c *Client) ListBanks(ctx context.Context, countryCode string) ([]Bank, err
 		Message string `json:"message"`
 		Data    []Bank `json:"data"`
 	}
-	if err := c.get(ctx, path, &envelope); err != nil {
+	if err := c.getPublic(ctx, path, &envelope); err != nil {
 		return nil, err
 	}
 	if !envelope.Status {
@@ -273,7 +540,7 @@ func (c *Client) ResolveBankAccount(ctx context.Context, req ResolveBankAccountR
 		Message string              `json:"message"`
 		Data    ResolvedBankAccount `json:"data"`
 	}
-	if err := c.post(ctx, "/merchant/api/v1/misc/banks/resolve", req, &envelope); err != nil {
+	if err := c.postPublic(ctx, "/merchant/api/v1/misc/banks/resolve", req, &envelope); err != nil {
 		return nil, err
 	}
 	if !envelope.Status {
@@ -283,16 +550,62 @@ func (c *Client) ResolveBankAccount(ctx context.Context, req ResolveBankAccountR
 }
 
 func (c *Client) get(ctx context.Context, path string, out interface{}) error {
-	return c.do(ctx, http.MethodGet, path, nil, out)
+	return c.getSecret(ctx, path, out)
 }
 
 func (c *Client) post(ctx context.Context, path string, payload interface{}, out interface{}) error {
-	return c.do(ctx, http.MethodPost, path, payload, out)
+	return c.postSecret(ctx, path, payload, out)
 }
 
-func (c *Client) do(ctx context.Context, method, path string, payload interface{}, out interface{}) error {
-	if c.secretKey == "" {
-		return fmt.Errorf("kora secret key is not configured")
+func (c *Client) getPublic(ctx context.Context, path string, out interface{}) error {
+	return c.do(ctx, http.MethodGet, path, nil, out, c.publicKey, "kora public key")
+}
+
+func (c *Client) postPublic(ctx context.Context, path string, payload interface{}, out interface{}) error {
+	return c.do(ctx, http.MethodPost, path, payload, out, c.publicKey, "kora public key")
+}
+
+func (c *Client) getSecret(ctx context.Context, path string, out interface{}) error {
+	return c.do(ctx, http.MethodGet, path, nil, out, c.secretKey, "kora secret key")
+}
+
+func (c *Client) postSecret(ctx context.Context, path string, payload interface{}, out interface{}) error {
+	return c.do(ctx, http.MethodPost, path, payload, out, c.secretKey, "kora secret key")
+}
+
+func (c *Client) getSecretFirst(ctx context.Context, paths []string, out interface{}) error {
+	var lastErr error
+	for _, path := range paths {
+		err := c.getSecret(ctx, path, out)
+		if err == nil {
+			return nil
+		}
+		lastErr = err
+		if !canTryAlternateKoraPath(err) {
+			return err
+		}
+	}
+	return lastErr
+}
+
+func (c *Client) postSecretFirst(ctx context.Context, paths []string, payload interface{}, out interface{}) error {
+	var lastErr error
+	for _, path := range paths {
+		err := c.postSecret(ctx, path, payload, out)
+		if err == nil {
+			return nil
+		}
+		lastErr = err
+		if !canTryAlternateKoraPath(err) {
+			return err
+		}
+	}
+	return lastErr
+}
+
+func (c *Client) do(ctx context.Context, method, path string, payload interface{}, out interface{}, authKey, authName string) error {
+	if authKey == "" {
+		return fmt.Errorf("%s is not configured", authName)
 	}
 
 	var body io.Reader
@@ -309,7 +622,17 @@ func (c *Client) do(ctx context.Context, method, path string, payload interface{
 	var fullURL string
 	if c.base != nil {
 		u := *c.base
-		u.Path = pathpkg.Join(u.Path, strings.TrimPrefix(path, "/"))
+		requestPath := strings.TrimPrefix(path, "/")
+		rawQuery := ""
+		if parsedPath, err := url.Parse(path); err == nil {
+			requestPath = strings.TrimPrefix(parsedPath.Path, "/")
+			rawQuery = parsedPath.RawQuery
+		}
+		if strings.HasSuffix(strings.Trim(u.Path, "/"), "merchant") && strings.HasPrefix(requestPath, "merchant/") {
+			requestPath = strings.TrimPrefix(requestPath, "merchant/")
+		}
+		u.Path = pathpkg.Join(u.Path, requestPath)
+		u.RawQuery = rawQuery
 		fullURL = u.String()
 	} else {
 		fullURL = c.baseURL + path
@@ -318,7 +641,7 @@ func (c *Client) do(ctx context.Context, method, path string, payload interface{
 	if err != nil {
 		return err
 	}
-	request.Header.Set("Authorization", "Bearer "+c.secretKey)
+	request.Header.Set("Authorization", "Bearer "+authKey)
 	request.Header.Set("Accept", "application/json")
 	if payload != nil {
 		request.Header.Set("Content-Type", "application/json")
@@ -336,10 +659,18 @@ func (c *Client) do(ctx context.Context, method, path string, payload interface{
 	}
 
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
-		return fmt.Errorf("kora request failed with status %d: %s", response.StatusCode, string(raw))
+		return &HTTPError{StatusCode: response.StatusCode, Body: string(raw)}
 	}
 
 	return json.Unmarshal(raw, out)
+}
+
+func canTryAlternateKoraPath(err error) bool {
+	var httpErr *HTTPError
+	if !errors.As(err, &httpErr) {
+		return false
+	}
+	return httpErr.StatusCode == http.StatusNotFound || httpErr.StatusCode == http.StatusMethodNotAllowed
 }
 
 func firstNonEmpty(values ...string) string {
@@ -363,4 +694,37 @@ func providerStatusString(value interface{}) string {
 	default:
 		return ""
 	}
+}
+
+func valueToString(value interface{}) string {
+	switch typed := value.(type) {
+	case string:
+		return typed
+	case json.Number:
+		return typed.String()
+	case float64:
+		return fmt.Sprintf("%.2f", typed)
+	case int:
+		return fmt.Sprintf("%d", typed)
+	case int64:
+		return fmt.Sprintf("%d", typed)
+	default:
+		return ""
+	}
+}
+
+func firstNonNil(values ...interface{}) interface{} {
+	for _, value := range values {
+		if value != nil {
+			return value
+		}
+	}
+	return nil
+}
+
+func defaultDecimal(value string) string {
+	if strings.TrimSpace(value) == "" {
+		return "0"
+	}
+	return value
 }

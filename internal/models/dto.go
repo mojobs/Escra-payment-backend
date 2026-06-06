@@ -102,6 +102,67 @@ type KoraBankResolveResponse struct {
 	AccountName   string `json:"account_name"`
 }
 
+type KoraVerifyIdentityRequest struct {
+	IDNumber string `json:"id_number" binding:"required,min=6,max=30"`
+	IDType   string `json:"id_type" binding:"required,oneof=BVN NIN"`
+}
+
+type KoraVerifyIdentityResponse struct {
+	Success           bool       `json:"success"`
+	KYCStatus         string     `json:"kyc_status"`
+	KYCProvider       string     `json:"kyc_provider"`
+	KYCReference      string     `json:"kyc_reference,omitempty"`
+	KYCIDType         string     `json:"kyc_id_type"`
+	KYCIDLast4        string     `json:"kyc_id_last4,omitempty"`
+	KYCVerifiedAt     *time.Time `json:"kyc_verified_at,omitempty"`
+	ProviderMessage   string     `json:"provider_message,omitempty"`
+	ProviderReference string     `json:"provider_reference,omitempty"`
+}
+
+type KoraVirtualAccountRequest struct {
+	EscrowReference string `json:"escrow_reference,omitempty" binding:"omitempty,max=60"`
+	AccountName     string `json:"account_name,omitempty" binding:"omitempty,max=120"`
+	BankCode        string `json:"bank_code,omitempty" binding:"omitempty,max=20"`
+	Currency        string `json:"currency,omitempty" binding:"omitempty,len=3"`
+	IDNumber        string `json:"id_number" binding:"required,min=6,max=30"`
+	IDType          string `json:"id_type" binding:"required,oneof=BVN NIN"`
+	Permanent       bool   `json:"permanent"`
+}
+
+type KoraVirtualAccountResponse struct {
+	ID                 string    `json:"id"`
+	AccountReference   string    `json:"account_reference"`
+	AccountName        string    `json:"account_name"`
+	AccountNumber      string    `json:"account_number"`
+	BankCode           string    `json:"bank_code,omitempty"`
+	BankName           string    `json:"bank_name,omitempty"`
+	Currency           string    `json:"currency"`
+	Status             string    `json:"status"`
+	Permanent          bool      `json:"permanent"`
+	ProviderCustomerID string    `json:"provider_customer_id,omitempty"`
+	CreatedAt          time.Time `json:"created_at"`
+}
+
+type KoraBalanceResponse struct {
+	Provider string        `json:"provider"`
+	Balances []KoraBalance `json:"balances"`
+}
+
+type KoraBalance struct {
+	Currency         string       `json:"currency"`
+	AvailableBalance money.Amount `json:"available_balance_kobo"`
+	PendingBalance   money.Amount `json:"pending_balance_kobo"`
+	RawAvailable     string       `json:"raw_available_balance,omitempty"`
+	RawPending       string       `json:"raw_pending_balance,omitempty"`
+}
+
+type KoraRefundRequest struct {
+	PaymentReference string       `json:"payment_reference" binding:"required"`
+	Amount           money.Amount `json:"amount_kobo" binding:"required"`
+	Currency         string       `json:"currency,omitempty" binding:"omitempty,len=3"`
+	Reason           string       `json:"reason,omitempty" binding:"omitempty,max=500"`
+}
+
 type ProviderTransactionResponse struct {
 	ID                string       `json:"id"`
 	Provider          string       `json:"provider"`

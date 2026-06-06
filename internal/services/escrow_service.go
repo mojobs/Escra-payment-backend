@@ -56,6 +56,14 @@ func (s *EscrowService) CreateOrder(sellerID uuid.UUID, req *models.CreateEscrow
 		metadata = payload
 	}
 
+	seller, err := s.userService.GetUserByID(sellerID.String())
+	if err != nil {
+		return nil, err
+	}
+	if !isUserKYCVerified(seller) {
+		return nil, errors.New("complete Kora KYC before creating escrow orders")
+	}
+
 	sellerWallet, err := s.walletService.GetWalletByUserID(sellerID)
 	if err != nil {
 		return nil, err

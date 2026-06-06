@@ -3,6 +3,7 @@
 @recipient_wallet_id = paste-recipient-wallet-id-here
 @escrow_reference = paste-escrow-reference-here
 @admin_key = replace-with-admin-api-key
+@payment_reference = paste-kora-payment-reference-here
 
 ### REGISTER
 POST {{base_url}}/auth/register
@@ -51,13 +52,47 @@ Content-Type: application/json
 GET {{base_url}}/limits
 Authorization: Bearer {{access_token}}
 
+### KORA KYC VERIFY
+POST {{base_url}}/providers/kora/kyc/verify
+Authorization: Bearer {{access_token}}
+Idempotency-Key: {{$guid}}
+Content-Type: application/json
+
+{
+  "id_number": "22222222222",
+  "id_type": "BVN"
+}
+
 ### KORA BANKS
 GET {{base_url}}/providers/kora/banks?countryCode=NG
 Authorization: Bearer {{access_token}}
 
 ### KORA RESOLVE BANK ACCOUNT
 GET {{base_url}}/providers/kora/banks/resolve?bank_code=044&account_number=0123456789&currency=NG
-Authorization: Bearer sk_test_z6W14giS2d94QcqhBH1AmTAWrHTHTmdBazExqLRu
+Authorization: Bearer {{access_token}}
+
+### KORA BALANCES
+GET {{base_url}}/providers/kora/balances
+Authorization: Bearer {{access_token}}
+
+### KORA VIRTUAL ACCOUNT FOR ESCROW PAY-IN
+POST {{base_url}}/providers/kora/virtual-accounts
+Authorization: Bearer {{access_token}}
+Idempotency-Key: {{$guid}}
+Content-Type: application/json
+
+{
+  "escrow_reference": "{{escrow_reference}}",
+  "account_name": "Fola Ajibola",
+  "currency": "NGN",
+  "id_number": "22222222222",
+  "id_type": "BVN",
+  "permanent": false
+}
+
+### LIST KORA VIRTUAL ACCOUNTS
+GET {{base_url}}/providers/kora/virtual-accounts
+Authorization: Bearer {{access_token}}
 
 ### KORA BANK PAYOUT
 POST {{base_url}}/providers/kora/payouts/bank
@@ -223,4 +258,16 @@ Content-Type: application/json
 {
   "action": "REFUND",
   "resolution_note": "Admin reviewed evidence and refunded buyer"
+}
+
+### ADMIN KORA REFUND TO ORIGINAL PAYMENT
+POST {{base_url}}/admin/providers/kora/refunds
+X-Admin-Key: {{admin_key}}
+Content-Type: application/json
+
+{
+  "payment_reference": "{{payment_reference}}",
+  "amount_kobo": 150000,
+  "currency": "NGN",
+  "reason": "Dispute resolved in favor of buyer"
 }

@@ -47,7 +47,7 @@ func TestRequestPayout(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, "secret")
+	client := NewClient(server.URL, "public", "secret")
 	got, err := client.RequestPayout(context.Background(), PayoutRequest{
 		Reference: "LARA-123",
 		Amount:    money.FromMinorUnits(12345),
@@ -83,7 +83,7 @@ func TestListBanks(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, "secret")
+	client := NewClient(server.URL, "secret", "secret")
 	banks, err := client.ListBanks(context.Background(), "ng")
 	if err != nil {
 		t.Fatalf("list banks: %v", err)
@@ -113,7 +113,7 @@ func TestResolveBankAccount(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, "secret")
+	client := NewClient(server.URL, "secret", "secret")
 	account, err := client.ResolveBankAccount(context.Background(), ResolveBankAccountRequest{
 		BankCode:      "044",
 		AccountNumber: "0123456789",
@@ -156,7 +156,7 @@ func TestInitializeCheckout(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, "secret")
+	client := NewClient(server.URL, "public", "secret")
 	got, err := client.InitializeCheckout(context.Background(), CheckoutRequest{
 		Reference:         "ESCROW-123",
 		Amount:            money.FromMinorUnits(150000),

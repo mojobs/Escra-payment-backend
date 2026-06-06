@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -21,7 +22,11 @@ import (
 type KoraClient interface {
 	ListBanks(ctx context.Context, countryCode string) ([]kora.Bank, error)
 	ResolveBankAccount(ctx context.Context, req kora.ResolveBankAccountRequest) (*kora.ResolvedBankAccount, error)
+	VerifyIdentity(ctx context.Context, req kora.VerifyIdentityRequest) (*kora.VerifyIdentityResponse, error)
+	CreateVirtualAccount(ctx context.Context, req kora.VirtualAccountRequest) (*kora.VirtualAccountResponse, error)
+	GetBalances(ctx context.Context) ([]kora.Balance, error)
 	RequestPayout(ctx context.Context, req kora.PayoutRequest) (*kora.PayoutResponse, error)
+	RequestRefund(ctx context.Context, req kora.RefundRequest) (*kora.RefundResponse, error)
 	InitializeCheckout(ctx context.Context, req kora.CheckoutRequest) (*kora.CheckoutResponse, error)
 }
 
@@ -62,6 +67,296 @@ func (s *ProviderService) ResolveKoraBankAccount(ctx context.Context, bankCode, 
 	})
 }
 
+func (s *ProviderService) VerifyKoraIdentity(ctx context.Context, userID uuid.UUID, req *models.KoraVerifyIdentityRequest) (*models.KoraVerifyIdentityResponse, error) {
+	idType := strings.ToUpper(strings.TrimSpace(req.IDType))
+	verifiedAt := timeNowUTC()
+
+	response, err := s.koraClient.VerifyIdentity(ctx, kora.VerifyIdentityRequest{
+		IDNumber: req.IDNumber,
+		IDType:   idType,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	kycStatus := "VERIFIED"
+	if normalized := normalizeProviderStatus(response.Status); normalized == "FAILED" {
+		kycStatus = "FAILED"
+	}
+
+	payload := response.Raw
+	updates := map[string]interface{}{
+		"kyc_status":      kycStatus,
+		"kyc_provider":    "kora",
+		"kyc_reference":   firstNonEmpty(response.Reference, providerReference("KYC")),
+		"kyc_id_type":     idType,
+		"kyc_id_last4":    last4(req.IDNumber),
+		"kyc_response":    json.RawMessage(payload),
+		"kyc_verified_at": nil,
+	}
+	if kycStatus == "VERIFIED" {
+		updates["kyc_verified_at"] = verifiedAt
+	}
+	if err := s.db.Model(&models.User{}).Where("id = ?", userID).Updates(updates).Error; err != nil {
+		return nil, err
+	}
+
+	var verifiedAtPtr *time.Time
+	if kycStatus == "VERIFIED" {
+		verifiedAtPtr = &verifiedAt
+	}
+	return &models.KoraVerifyIdentityResponse{
+		Success:           kycStatus == "VERIFIED",
+		KYCStatus:         kycStatus,
+		KYCProvider:       "kora",
+		KYCReference:      updates["kyc_reference"].(string),
+		KYCIDType:         idType,
+		KYCIDLast4:        last4(req.IDNumber),
+		KYCVerifiedAt:     verifiedAtPtr,
+		ProviderMessage:   response.Message,
+		ProviderReference: response.Reference,
+	}, nil
+}
+
+func (s *ProviderService) CreateKoraVirtualAccount(ctx context.Context, userID uuid.UUID, req *models.KoraVirtualAccountRequest) (*models.KoraVirtualAccountResponse, error) {
+	user, err := s.userService.GetUserByID(userID.String())
+	if err != nil {
+		return nil, err
+	}
+	if !isUserKYCVerified(user) {
+		return nil, errors.New("complete Kora KYC before creating a virtual account")
+	}
+	if user.Email == nil || strings.TrimSpace(*user.Email) == "" {
+		return nil, errors.New("email is required to create a Kora virtual account")
+	}
+
+	currency := strings.ToUpper(firstNonEmpty(req.Currency, "NGN"))
+	accountName := firstNonEmpty(req.AccountName, strings.TrimSpace(user.FirstName+" "+user.LastName))
+	accountReference := providerReference("VBA")
+
+	var order *models.EscrowOrder
+	if req.EscrowReference != "" {
+		var found models.EscrowOrder
+		if err := s.db.Where("reference = ?", req.EscrowReference).First(&found).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, errors.New("escrow order not found")
+			}
+			return nil, err
+		}
+		if found.Status != "CREATED" {
+			return nil, fmt.Errorf("escrow order cannot receive a virtual account from state %s", found.Status)
+		}
+		if found.SellerID == userID {
+			return nil, errors.New("seller cannot fund their own escrow order")
+		}
+		if found.BuyerID != nil && *found.BuyerID != userID {
+			return nil, errors.New("another buyer has already started funding this escrow order")
+		}
+		if found.Currency != currency {
+			return nil, fmt.Errorf("escrow currency %s does not match virtual account currency %s", found.Currency, currency)
+		}
+		order = &found
+	}
+
+	requestPayload, err := json.Marshal(map[string]interface{}{
+		"account_reference": accountReference,
+		"account_name":      accountName,
+		"bank_code":         req.BankCode,
+		"currency":          currency,
+		"permanent":         req.Permanent,
+		"escrow_reference":  req.EscrowReference,
+		"id_type":           req.IDType,
+		"id_last4":          last4(req.IDNumber),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var providerTx models.ProviderTransaction
+	var virtualAccount models.KoraVirtualAccount
+	err = s.db.Transaction(func(tx *gorm.DB) error {
+		providerTx = models.ProviderTransaction{
+			Provider:       "kora",
+			Reference:      accountReference,
+			UserID:         &userID,
+			Type:           "ESCROW_VIRTUAL_ACCOUNT",
+			Status:         "PENDING",
+			Currency:       currency,
+			RequestPayload: json.RawMessage(requestPayload),
+		}
+		if order != nil {
+			providerTx.EscrowOrderID = &order.ID
+			providerTx.Amount = order.Amount
+		}
+		if err := tx.Create(&providerTx).Error; err != nil {
+			return err
+		}
+		virtualAccount = models.KoraVirtualAccount{
+			UserID:           userID,
+			AccountReference: accountReference,
+			AccountName:      accountName,
+			BankCode:         req.BankCode,
+			Currency:         currency,
+			Status:           "PENDING",
+			Permanent:        req.Permanent,
+			RequestPayload:   json.RawMessage(requestPayload),
+			ProviderTxID:     &providerTx.ID,
+		}
+		if order != nil {
+			virtualAccount.EscrowOrderID = &order.ID
+		}
+		return tx.Create(&virtualAccount).Error
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	koraResponse, err := s.koraClient.CreateVirtualAccount(ctx, kora.VirtualAccountRequest{
+		AccountName:      accountName,
+		AccountReference: accountReference,
+		BankCode:         req.BankCode,
+		Currency:         currency,
+		IDNumber:         req.IDNumber,
+		IDType:           req.IDType,
+		Permanent:        req.Permanent,
+		CustomerName:     strings.TrimSpace(user.FirstName + " " + user.LastName),
+		CustomerEmail:    *user.Email,
+	})
+	if err != nil {
+		_ = s.markProviderUnknown(providerTx.ID, err)
+		virtualAccount.Status = "UNKNOWN"
+		_ = s.db.Model(&virtualAccount).Update("status", "UNKNOWN").Error
+		return koraVirtualAccountResponse(&virtualAccount), nil
+	}
+
+	status := normalizeProviderStatus(koraResponse.Status)
+	if status == "" {
+		status = "ACTIVE"
+	}
+	if err := s.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&providerTx).Updates(map[string]interface{}{
+			"status":             status,
+			"external_reference": koraResponse.AccountReference,
+			"response_payload":   koraResponse.Raw,
+		}).Error; err != nil {
+			return err
+		}
+		return tx.Model(&virtualAccount).Updates(map[string]interface{}{
+			"status":               status,
+			"account_reference":    koraResponse.AccountReference,
+			"account_name":         koraResponse.AccountName,
+			"account_number":       koraResponse.AccountNumber,
+			"bank_code":            firstNonEmpty(koraResponse.BankCode, req.BankCode),
+			"bank_name":            koraResponse.BankName,
+			"currency":             firstNonEmpty(koraResponse.Currency, currency),
+			"provider_customer_id": koraResponse.ProviderCustomerID,
+			"response_payload":     koraResponse.Raw,
+		}).Error
+	}); err != nil {
+		return nil, err
+	}
+
+	virtualAccount.Status = status
+	virtualAccount.AccountReference = koraResponse.AccountReference
+	virtualAccount.AccountName = koraResponse.AccountName
+	virtualAccount.AccountNumber = koraResponse.AccountNumber
+	virtualAccount.BankCode = firstNonEmpty(koraResponse.BankCode, req.BankCode)
+	virtualAccount.BankName = koraResponse.BankName
+	virtualAccount.Currency = firstNonEmpty(koraResponse.Currency, currency)
+	virtualAccount.ProviderCustomerID = koraResponse.ProviderCustomerID
+	return koraVirtualAccountResponse(&virtualAccount), nil
+}
+
+func (s *ProviderService) ListKoraVirtualAccounts(userID uuid.UUID) ([]models.KoraVirtualAccountResponse, error) {
+	var accounts []models.KoraVirtualAccount
+	if err := s.db.Where("user_id = ?", userID).Order("created_at DESC").Find(&accounts).Error; err != nil {
+		return nil, err
+	}
+	responses := make([]models.KoraVirtualAccountResponse, 0, len(accounts))
+	for i := range accounts {
+		responses = append(responses, *koraVirtualAccountResponse(&accounts[i]))
+	}
+	return responses, nil
+}
+
+func (s *ProviderService) GetKoraBalances(ctx context.Context) (*models.KoraBalanceResponse, error) {
+	balances, err := s.koraClient.GetBalances(ctx)
+	if err != nil {
+		return nil, err
+	}
+	response := &models.KoraBalanceResponse{
+		Provider: "kora",
+		Balances: make([]models.KoraBalance, 0, len(balances)),
+	}
+	for _, balance := range balances {
+		response.Balances = append(response.Balances, models.KoraBalance{
+			Currency:         balance.Currency,
+			AvailableBalance: balance.AvailableBalance,
+			PendingBalance:   balance.PendingBalance,
+			RawAvailable:     balance.RawAvailable,
+			RawPending:       balance.RawPending,
+		})
+	}
+	return response, nil
+}
+
+func (s *ProviderService) InitiateKoraRefund(ctx context.Context, req *models.KoraRefundRequest) (*models.ProviderTransaction, error) {
+	if !req.Amount.IsPositive() {
+		return nil, errors.New("amount must be greater than zero")
+	}
+	req.Currency = strings.ToUpper(firstNonEmpty(req.Currency, "NGN"))
+	reference := providerReference("KORA-REFUND")
+	requestPayload, err := json.Marshal(map[string]interface{}{
+		"reference":         reference,
+		"payment_reference": req.PaymentReference,
+		"amount_kobo":       req.Amount,
+		"currency":          req.Currency,
+		"reason":            req.Reason,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	providerTx := models.ProviderTransaction{
+		Provider:          "kora",
+		Reference:         reference,
+		ExternalReference: req.PaymentReference,
+		Type:              "REFUND",
+		Status:            "PENDING",
+		Amount:            req.Amount,
+		Currency:          req.Currency,
+		RequestPayload:    json.RawMessage(requestPayload),
+	}
+	if err := s.db.Create(&providerTx).Error; err != nil {
+		return nil, err
+	}
+
+	refundResponse, err := s.koraClient.RequestRefund(ctx, kora.RefundRequest{
+		Reference:        reference,
+		PaymentReference: req.PaymentReference,
+		Amount:           req.Amount,
+		Currency:         req.Currency,
+		Reason:           req.Reason,
+	})
+	if err != nil {
+		_ = s.markProviderUnknown(providerTx.ID, err)
+		providerTx.Status = "UNKNOWN"
+		return &providerTx, nil
+	}
+
+	status := normalizeProviderStatus(refundResponse.Status)
+	if status == "" {
+		status = "PROCESSING"
+	}
+	if err := s.updateProviderAfterRequest(providerTx, status, refundResponse.ExternalReference, refundResponse.Raw); err != nil {
+		return nil, err
+	}
+	providerTx.Status = status
+	providerTx.ExternalReference = firstNonEmpty(refundResponse.ExternalReference, req.PaymentReference)
+	providerTx.ResponsePayload = refundResponse.Raw
+	return &providerTx, nil
+}
+
 func (s *ProviderService) InitiateEscrowKoraCheckout(ctx context.Context, userID uuid.UUID, escrowReference string, req *models.KoraEscrowCheckoutRequest, defaultNotificationURL string) (*models.EscrowCheckoutResponse, error) {
 	var order models.EscrowOrder
 	if err := s.db.Where("reference = ?", escrowReference).First(&order).Error; err != nil {
@@ -83,6 +378,9 @@ func (s *ProviderService) InitiateEscrowKoraCheckout(ctx context.Context, userID
 	user, err := s.userService.GetUserByID(userID.String())
 	if err != nil {
 		return nil, err
+	}
+	if !isUserKYCVerified(user) {
+		return nil, errors.New("complete Kora KYC before starting escrow checkout")
 	}
 	if user.Email == nil || strings.TrimSpace(*user.Email) == "" {
 		return nil, errors.New("buyer email is required to start Kora checkout")
@@ -254,6 +552,9 @@ func (s *ProviderService) InitiateKoraBankPayout(ctx context.Context, userID uui
 		}
 		if err := utils.CheckPassword(user.PinHash, req.Pin); err != nil {
 			return errors.New("invalid PIN")
+		}
+		if !isUserKYCVerified(&user) {
+			return errors.New("complete Kora KYC before requesting payout")
 		}
 
 		customerEmail := req.CustomerEmail
@@ -600,4 +901,36 @@ func providerTransactionResponseDTO(tx *models.ProviderTransaction) models.Provi
 		Currency:          tx.Currency,
 		CreatedAt:         tx.CreatedAt,
 	}
+}
+
+func koraVirtualAccountResponse(account *models.KoraVirtualAccount) *models.KoraVirtualAccountResponse {
+	return &models.KoraVirtualAccountResponse{
+		ID:                 account.ID.String(),
+		AccountReference:   account.AccountReference,
+		AccountName:        account.AccountName,
+		AccountNumber:      account.AccountNumber,
+		BankCode:           account.BankCode,
+		BankName:           account.BankName,
+		Currency:           account.Currency,
+		Status:             account.Status,
+		Permanent:          account.Permanent,
+		ProviderCustomerID: account.ProviderCustomerID,
+		CreatedAt:          account.CreatedAt,
+	}
+}
+
+func isUserKYCVerified(user *models.User) bool {
+	return strings.EqualFold(user.KYCStatus, "VERIFIED")
+}
+
+func last4(value string) string {
+	value = strings.TrimSpace(value)
+	if len(value) <= 4 {
+		return value
+	}
+	return value[len(value)-4:]
+}
+
+func timeNowUTC() time.Time {
+	return time.Now().UTC()
 }

@@ -282,9 +282,24 @@ Base URL: `/api/v1`
 
 ## Kora provider routes
 
+### Verify Kora KYC
+- `POST /api/v1/providers/kora/kyc/verify`
+- auth: yes
+- idempotency: yes
+- body:
+- `id_number`
+- `id_type`
+- allowed `id_type` values:
+- `BVN`
+- `NIN`
+- purpose:
+- verifies the user with Kora and marks them as KYC verified before escrow, pay-in, and payout actions
+
 ### List supported banks
 - `GET /api/v1/providers/kora/banks?countryCode=NG`
 - auth: yes
+- note:
+- uses the Kora public key
 - returns:
 - `success`
 - `banks`
@@ -297,6 +312,39 @@ Base URL: `/api/v1`
 - `bank_code`
 - `account_number`
 - `account_name`
+
+### Get Kora balances
+- `GET /api/v1/providers/kora/balances`
+- auth: yes
+- purpose:
+- reconciliation and provider-side fund tracking
+- returns:
+- `provider`
+- `balances`
+
+### Create Kora virtual account
+- `POST /api/v1/providers/kora/virtual-accounts`
+- auth: yes
+- idempotency: yes
+- body:
+- `escrow_reference` optional
+- `account_name` optional
+- `bank_code` optional
+- `currency` optional
+- `id_number`
+- `id_type`
+- `permanent`
+- purpose:
+- creates a Kora virtual bank account for pay-ins
+- if `escrow_reference` is supplied, successful webhook funding maps to that escrow order
+
+### List my Kora virtual accounts
+- `GET /api/v1/providers/kora/virtual-accounts`
+- auth: yes
+- returns:
+- `success`
+- `accounts`
+- `count`
 
 ### Initiate bank payout
 - `POST /api/v1/providers/kora/payouts/bank`
@@ -312,6 +360,8 @@ Base URL: `/api/v1`
 - `narration` optional
 - `pin`
 - returns: provider transaction response
+- note:
+- user must be KYC verified
 
 ## Quidax provider routes
 
@@ -345,6 +395,18 @@ Base URL: `/api/v1`
 - `RELEASE`
 - `REFUND`
 - returns: full escrow order object
+
+### Initiate Kora refund
+- `POST /api/v1/admin/providers/kora/refunds`
+- auth: admin header
+- headers:
+- `X-Admin-Key`
+- body:
+- `payment_reference`
+- `amount_kobo`
+- `currency` optional
+- `reason` optional
+- returns: provider transaction response
 
 ## Main response objects
 

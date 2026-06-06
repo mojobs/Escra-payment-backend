@@ -30,9 +30,11 @@ func main() {
 
 	db := database.GetDB()
 
+	log.Println("Running Migrations")
 	if err := db.AutoMigrate(&models.User{}, &models.Wallet{}, &models.Transaction{}, &models.LedgerEntry{}, &models.IdempotencyKey{}, &models.TransactionLimit{}, &models.TransactionUsage{}, &models.ProviderTransaction{}, &models.WebhookEvent{}, &models.KoraVirtualAccount{}, &models.AuditLog{}, &models.EscrowOrder{}, &models.EscrowEvent{}, &models.EscrowDispute{}); err != nil {
 		log.Fatal("Failed to migrate database: ", err)
 	}
+	log.Println("Migrations completed successfully")
 
 	//Initialize services and controllers
 	jwtService, err := jwt.NewJWTService(cfg.JWTSecret)

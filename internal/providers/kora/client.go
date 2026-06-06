@@ -26,15 +26,6 @@ type Client struct {
 	httpClient *http.Client
 }
 
-type HTTPError struct {
-	StatusCode int
-	Body       string
-}
-
-func (e *HTTPError) Error() string {
-	return fmt.Sprintf("kora request failed with status %d: %s", e.StatusCode, e.Body)
-}
-
 func NewClient(baseURL, publicKey, secretKey string) *Client {
 	if baseURL == "" {
 		baseURL = defaultBaseURL
@@ -53,6 +44,15 @@ func NewClient(baseURL, publicKey, secretKey string) *Client {
 			Timeout: 30 * time.Second,
 		},
 	}
+}
+
+type HTTPError struct {
+	StatusCode int
+	Body       string
+}
+
+func (e *HTTPError) Error() string {
+	return fmt.Sprintf("kora request failed with status %d: %s", e.StatusCode, e.Body)
 }
 
 type PayoutRequest struct {
@@ -320,10 +320,7 @@ func (c *Client) VerifyIdentity(ctx context.Context, req VerifyIdentityRequest) 
 		idType = "bvn"
 	}
 
-	payload := map[string]string{
-		idType: req.IDNumber,
-	}
-
+	payload := map[string]string{idType: req.IDNumber}
 	var raw json.RawMessage
 	if err := c.postSecretFirst(ctx, []string{
 		"/merchant/api/v1/identities/" + idType,
@@ -337,7 +334,6 @@ func (c *Client) VerifyIdentity(ctx context.Context, req VerifyIdentityRequest) 
 		Status: "verified",
 		Raw:    raw,
 	}
-
 	var envelope struct {
 		Status  interface{} `json:"status"`
 		Message string      `json:"message"`
@@ -356,29 +352,18 @@ func (c *Client) VerifyIdentity(ctx context.Context, req VerifyIdentityRequest) 
 }
 
 func (c *Client) CreateVirtualAccount(ctx context.Context, req VirtualAccountRequest) (*VirtualAccountResponse, error) {
-	type virtualAccountPayload struct {
-		AccountName      string                 `json:"account_name"`
-		AccountReference string                 `json:"account_reference"`
-		BankCode         string                 `json:"bank_code,omitempty"`
-		Currency         string                 `json:"currency"`
-		Permanent        bool                   `json:"permanent"`
-		Customer         map[string]string      `json:"customer"`
-		KYC              map[string]string      `json:"kyc"`
-		Meta             map[string]interface{} `json:"metadata,omitempty"`
-	}
-
 	idType := strings.ToLower(strings.TrimSpace(req.IDType))
-	payload := virtualAccountPayload{
-		AccountName:      req.AccountName,
-		AccountReference: req.AccountReference,
-		BankCode:         req.BankCode,
-		Currency:         req.Currency,
-		Permanent:        req.Permanent,
-		Customer: map[string]string{
+	payload := map[string]interface{}{
+		"account_name":      req.AccountName,
+		"account_reference": req.AccountReference,
+		"bank_code":         req.BankCode,
+		"currency":          req.Currency,
+		"permanent":         req.Permanent,
+		"customer": map[string]string{
 			"name":  req.CustomerName,
 			"email": req.CustomerEmail,
 		},
-		KYC: map[string]string{
+		"kyc": map[string]string{
 			idType: req.IDNumber,
 		},
 	}
@@ -398,11 +383,9 @@ func (c *Client) CreateVirtualAccount(ctx context.Context, req VirtualAccountReq
 		Status:           "ACTIVE",
 		Raw:              raw,
 	}
-
 	var envelope struct {
-		Status  interface{} `json:"status"`
-		Message string      `json:"message"`
-		Data    struct {
+		Status interface{} `json:"status"`
+		Data   struct {
 			AccountReference string `json:"account_reference"`
 			AccountName      string `json:"account_name"`
 			AccountNumber    string `json:"account_number"`
@@ -603,7 +586,7 @@ func (c *Client) postSecretFirst(ctx context.Context, paths []string, payload in
 	return lastErr
 }
 
-func (c *Client) do(ctx context.Context, method, path string, payload interface{}, out interface{}, authKey, authName string) error {
+func (c *Client) do(ctx context.Context, method, requestPath string, payload interface{}, out interface{}, authKey, authName string) error {
 	if authKey == "" {
 		return fmt.Errorf("%s is not configured", authName)
 	}
@@ -617,26 +600,7 @@ func (c *Client) do(ctx context.Context, method, path string, payload interface{
 		body = bytes.NewReader(bodyBytes)
 	}
 
-	// Build URL safely by joining the base URL and the request path so
-	// callers can supply a base that already includes "/merchant" or not.
-	var fullURL string
-	if c.base != nil {
-		u := *c.base
-		requestPath := strings.TrimPrefix(path, "/")
-		rawQuery := ""
-		if parsedPath, err := url.Parse(path); err == nil {
-			requestPath = strings.TrimPrefix(parsedPath.Path, "/")
-			rawQuery = parsedPath.RawQuery
-		}
-		if strings.HasSuffix(strings.Trim(u.Path, "/"), "merchant") && strings.HasPrefix(requestPath, "merchant/") {
-			requestPath = strings.TrimPrefix(requestPath, "merchant/")
-		}
-		u.Path = pathpkg.Join(u.Path, requestPath)
-		u.RawQuery = rawQuery
-		fullURL = u.String()
-	} else {
-		fullURL = c.baseURL + path
-	}
+	fullURL := c.buildURL(requestPath)
 	request, err := http.NewRequestWithContext(ctx, method, fullURL, body)
 	if err != nil {
 		return err
@@ -663,6 +627,26 @@ func (c *Client) do(ctx context.Context, method, path string, payload interface{
 	}
 
 	return json.Unmarshal(raw, out)
+}
+
+func (c *Client) buildURL(requestPath string) string {
+	if c.base == nil {
+		return c.baseURL + requestPath
+	}
+
+	u := *c.base
+	pathOnly := strings.TrimPrefix(requestPath, "/")
+	rawQuery := ""
+	if parsedPath, err := url.Parse(requestPath); err == nil {
+		pathOnly = strings.TrimPrefix(parsedPath.Path, "/")
+		rawQuery = parsedPath.RawQuery
+	}
+	if strings.HasSuffix(strings.Trim(u.Path, "/"), "merchant") && strings.HasPrefix(pathOnly, "merchant/") {
+		pathOnly = strings.TrimPrefix(pathOnly, "merchant/")
+	}
+	u.Path = pathpkg.Join(u.Path, pathOnly)
+	u.RawQuery = rawQuery
+	return u.String()
 }
 
 func canTryAlternateKoraPath(err error) bool {

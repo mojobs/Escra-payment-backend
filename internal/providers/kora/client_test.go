@@ -146,6 +146,12 @@ func TestInitializeCheckout(t *testing.T) {
 		if payload["notification_url"] != "https://example.com/webhooks/kora" {
 			t.Fatalf("unexpected notification url %v", payload["notification_url"])
 		}
+		if payload["narration"] != "Escrow checkout pay now" {
+			t.Fatalf("unexpected narration %v", payload["narration"])
+		}
+		if _, ok := payload["description"]; ok {
+			t.Fatalf("checkout payload should use narration, got description in %v", payload)
+		}
 		customer := payload["customer"].(map[string]interface{})
 		if customer["email"] != "buyer@example.com" {
 			t.Fatalf("unexpected customer email %v", customer["email"])
@@ -167,7 +173,7 @@ func TestInitializeCheckout(t *testing.T) {
 		CustomerName:      "Buyer Demo",
 		CustomerPhone:     "08100000000",
 		MerchantBearsCost: true,
-		Description:       "Escrow checkout",
+		Narration:         "Escrow checkout: pay now!",
 	})
 	if err != nil {
 		t.Fatalf("initialize checkout: %v", err)
@@ -180,5 +186,27 @@ func TestInitializeCheckout(t *testing.T) {
 	}
 	if got.Status != "pending" {
 		t.Fatalf("got status %q", got.Status)
+	}
+}
+
+func TestBuildURLDoesNotDuplicateMerchantAPIPrefix(t *testing.T) {
+	client := NewClient("https://api.korapay.com/merchant/api/v1", "public", "secret")
+
+	got := client.buildURL("/merchant/api/v1/charges/initialize")
+	want := "https://api.korapay.com/merchant/api/v1/charges/initialize"
+	if got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
+}
+
+func TestSanitizeKorapayNarration(t *testing.T) {
+	got := sanitizeKorapayNarration(" Escrow checkout: pay now! ")
+	if got != "Escrow checkout pay now" {
+		t.Fatalf("got %q", got)
+	}
+
+	got = sanitizeKorapayNarration("")
+	if got != "ESCRA Payment" {
+		t.Fatalf("got default narration %q", got)
 	}
 }

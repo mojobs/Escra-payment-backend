@@ -149,8 +149,18 @@ func verifyKoraSignature(body []byte, signature, secret string) bool {
 	if secret == "" {
 		return true
 	}
+	signature = normalizeSignature(signature)
 	if signature == "" {
 		return false
+	}
+
+	if verifyHMACSHA256Hex(body, signature, secret) {
+		return true
+	}
+
+	canonicalBody, err := canonicalJSON(body)
+	if err == nil && verifyHMACSHA256Hex(canonicalBody, signature, secret) {
+		return true
 	}
 
 	var payload map[string]json.RawMessage
@@ -168,8 +178,7 @@ func verifyKoraSignature(body []byte, signature, secret string) bool {
 		return false
 	}
 
-	expected := hmacSHA256Hex(canonicalData, secret)
-	return hmac.Equal([]byte(strings.ToLower(signature)), []byte(expected))
+	return verifyHMACSHA256Hex(canonicalData, signature, secret)
 }
 
 func verifyQuidaxSignature(body []byte, signatureHeader, secret string) bool {
@@ -211,6 +220,17 @@ func hmacSHA256Hex(payload []byte, secret string) string {
 	mac := hmac.New(sha256.New, []byte(secret))
 	mac.Write(payload)
 	return hex.EncodeToString(mac.Sum(nil))
+}
+
+func verifyHMACSHA256Hex(payload []byte, signature, secret string) bool {
+	expected := hmacSHA256Hex(payload, secret)
+	return hmac.Equal([]byte(normalizeSignature(signature)), []byte(expected))
+}
+
+func normalizeSignature(signature string) string {
+	signature = strings.TrimSpace(strings.ToLower(signature))
+	signature = strings.TrimPrefix(signature, "sha256=")
+	return signature
 }
 
 func parseQuidaxSignature(header string) (string, string) {

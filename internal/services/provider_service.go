@@ -357,6 +357,137 @@ func (s *ProviderService) InitiateKoraRefund(ctx context.Context, req *models.Ko
 	return &providerTx, nil
 }
 
+func (s *ProviderService) InitiateWalletKoraCheckout(ctx context.Context, userID uuid.UUID, req *models.KoraWalletCheckoutRequest, defaultNotificationURL string) (*models.KoraWalletCheckoutResponse, error) {
+	if !req.Amount.IsPositive() {
+		return nil, errors.New("amount must be greater than zero")
+	}
+
+	currency := strings.ToUpper(firstNonEmpty(req.Currency, "NGN"))
+	user, err := s.userService.GetUserByID(userID.String())
+	if err != nil {
+		return nil, err
+	}
+	if !strings.EqualFold(user.Status, "ACTIVE") {
+		return nil, errors.New("account is not active")
+	}
+
+	wallet, err := s.walletService.GetWalletByUserID(userID)
+	if err != nil {
+		return nil, err
+	}
+	if wallet.Status != "ACTIVE" {
+		return nil, errors.New("wallet is not active")
+	}
+	if wallet.Currency != currency {
+		return nil, fmt.Errorf("wallet currency %s cannot receive %s deposit", wallet.Currency, currency)
+	}
+
+	notificationURL := strings.TrimSpace(req.NotificationURL)
+	if notificationURL == "" {
+		notificationURL = strings.TrimRight(defaultNotificationURL, "/")
+		if notificationURL != "" {
+			notificationURL += "/api/v1/webhooks/kora"
+		}
+	}
+	if notificationURL == "" {
+		return nil, errors.New("notification url is required to start wallet checkout")
+	}
+
+	reference := providerReference("DEP-KORA")
+	narration := firstNonEmpty(req.Narration, "Direct wallet deposit")
+	customerName := strings.TrimSpace(user.FirstName + " " + user.LastName)
+	customerEmail := providerCustomerEmail(user)
+
+	requestPayload, err := json.Marshal(map[string]interface{}{
+		"reference":        reference,
+		"user_id":          userID.String(),
+		"wallet_id":        wallet.ID.String(),
+		"amount_kobo":      req.Amount,
+		"currency":         currency,
+		"redirect_url":     req.RedirectURL,
+		"notification_url": notificationURL,
+		"narration":        narration,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var internalTx models.Transaction
+	var providerTx models.ProviderTransaction
+	if err := s.db.Transaction(func(tx *gorm.DB) error {
+		internalTx = models.Transaction{
+			Reference:   reference,
+			ToWalletID:  &wallet.ID,
+			Amount:      req.Amount,
+			Currency:    currency,
+			Type:        "TOP_UP",
+			Status:      "PENDING",
+			Description: narration,
+		}
+		if err := tx.Create(&internalTx).Error; err != nil {
+			return err
+		}
+
+		providerTx = models.ProviderTransaction{
+			Provider:       "kora",
+			Reference:      reference,
+			UserID:         &userID,
+			TransactionID:  &internalTx.ID,
+			Type:           "WALLET_DEPOSIT",
+			Status:         "PENDING",
+			Amount:         req.Amount,
+			Currency:       currency,
+			RequestPayload: json.RawMessage(requestPayload),
+		}
+		return tx.Create(&providerTx).Error
+	}); err != nil {
+		return nil, err
+	}
+
+	checkoutResponse, err := s.koraClient.InitializeCheckout(ctx, kora.CheckoutRequest{
+		Reference:         reference,
+		Amount:            req.Amount,
+		Currency:          currency,
+		RedirectURL:       req.RedirectURL,
+		NotificationURL:   notificationURL,
+		MerchantBearsCost: false,
+		CustomerName:      customerName,
+		CustomerEmail:     customerEmail,
+		CustomerPhone:     user.Phone,
+		Narration:         narration,
+		Metadata: map[string]interface{}{
+			"flow":      "wallet_deposit",
+			"user_id":   userID.String(),
+			"wallet_id": wallet.ID.String(),
+		},
+	})
+	if err != nil {
+		_ = s.markProviderUnknown(providerTx.ID, err)
+		_ = s.db.Model(&models.Transaction{}).Where("id = ?", internalTx.ID).Update("status", "FAILED").Error
+		return nil, err
+	}
+	if strings.TrimSpace(checkoutResponse.CheckoutURL) == "" {
+		err := errors.New("kora checkout url was not returned")
+		_ = s.markProviderUnknown(providerTx.ID, err)
+		_ = s.db.Model(&models.Transaction{}).Where("id = ?", internalTx.ID).Update("status", "FAILED").Error
+		return nil, err
+	}
+
+	status := normalizeProviderStatus(checkoutResponse.Status)
+	if status == "" || status == "SUCCESS" {
+		status = "PROCESSING"
+	}
+	if err := s.updateProviderAfterRequest(providerTx, status, checkoutResponse.Reference, checkoutResponse.Raw); err != nil {
+		return nil, err
+	}
+
+	return &models.KoraWalletCheckoutResponse{
+		Success:     true,
+		CheckoutURL: checkoutResponse.CheckoutURL,
+		Reference:   reference,
+	}, nil
+}
+
 func (s *ProviderService) InitiateEscrowKoraCheckout(ctx context.Context, userID uuid.UUID, escrowReference string, req *models.KoraEscrowCheckoutRequest, defaultNotificationURL string) (*models.EscrowCheckoutResponse, error) {
 	var order models.EscrowOrder
 	if err := s.db.Where("reference = ?", escrowReference).First(&order).Error; err != nil {
@@ -416,6 +547,7 @@ func (s *ProviderService) InitiateEscrowKoraCheckout(ctx context.Context, userID
 		"buyer_phone":         user.Phone,
 		"notification_url":    notificationURL,
 		"redirect_url":        req.RedirectURL,
+		"narration":           req.Narration,
 		"merchant_bears_cost": req.MerchantBearsCost,
 		"default_channel":     req.DefaultChannel,
 		"channels":            req.Channels,
@@ -455,7 +587,7 @@ func (s *ProviderService) InitiateEscrowKoraCheckout(ctx context.Context, userID
 		CustomerName:      customerName,
 		CustomerEmail:     *user.Email,
 		CustomerPhone:     user.Phone,
-		Description:       fmt.Sprintf("Escrow payment for %s", order.Reference),
+		Narration:         firstNonEmpty(req.Narration, fmt.Sprintf("Escrow payment for %s", order.Reference)),
 		Metadata: map[string]interface{}{
 			"escrow_reference": order.Reference,
 			"buyer_id":         userID.String(),
@@ -921,6 +1053,13 @@ func koraVirtualAccountResponse(account *models.KoraVirtualAccount) *models.Kora
 
 func isUserKYCVerified(user *models.User) bool {
 	return strings.EqualFold(user.KYCStatus, "VERIFIED")
+}
+
+func providerCustomerEmail(user *models.User) string {
+	if user.Email != nil && strings.TrimSpace(*user.Email) != "" {
+		return strings.TrimSpace(*user.Email)
+	}
+	return strings.ToLower(user.ID.String()) + "@escra.local"
 }
 
 func last4(value string) string {

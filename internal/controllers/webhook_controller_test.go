@@ -34,6 +34,21 @@ func TestParseWebhookEnvelopeInvalidJSON(t *testing.T) {
 
 func TestVerifyKoraSignature(t *testing.T) {
 	body := []byte(`{"event":"charge.success","data":{"reference":"TRX123","status":"success"}}`)
+	signature := hmacSHA256Hex(body, "secret")
+
+	if !verifyKoraSignature(body, signature, "secret") {
+		t.Fatalf("expected raw body signature to verify")
+	}
+	if !verifyKoraSignature(body, "sha256="+signature, "secret") {
+		t.Fatalf("expected prefixed raw body signature to verify")
+	}
+	if verifyKoraSignature(body, "bad", "secret") {
+		t.Fatalf("expected bad signature to fail")
+	}
+}
+
+func TestVerifyKoraSignatureDataFallback(t *testing.T) {
+	body := []byte(`{"event":"charge.success","data":{"reference":"TRX123","status":"success"}}`)
 	canonical, err := canonicalJSON([]byte(`{"reference":"TRX123","status":"success"}`))
 	if err != nil {
 		t.Fatalf("canonical json: %v", err)
@@ -41,10 +56,7 @@ func TestVerifyKoraSignature(t *testing.T) {
 	signature := hmacSHA256Hex(canonical, "secret")
 
 	if !verifyKoraSignature(body, signature, "secret") {
-		t.Fatalf("expected signature to verify")
-	}
-	if verifyKoraSignature(body, "bad", "secret") {
-		t.Fatalf("expected bad signature to fail")
+		t.Fatalf("expected canonical data signature to verify")
 	}
 }
 

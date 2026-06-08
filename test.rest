@@ -15,7 +15,8 @@ Content-Type: application/json
   "first_name": "Fola",
   "last_name": "Ajibola",
   "pin": "1100",
-  "email": "fola@example.com"
+  "email": "fola@example.com",
+  "role": "seller"
 }
 
 ### LOGIN
@@ -31,9 +32,37 @@ Content-Type: application/json
 GET {{base_url}}/wallets/balance
 Authorization: Bearer {{access_token}}
 
+### KORA WALLET CHECKOUT
+POST {{base_url}}/wallets/checkout/kora
+Authorization: Bearer {{access_token}}
+Idempotency-Key: {{$guid}}
+Content-Type: application/json
+
+{
+  "amount_kobo": 500000,
+  "redirect_url": "https://escra.app/wallet/callback",
+  "narration": "Direct wallet deposit"
+}
+
 ### GET USER PROFILE
 GET {{base_url}}/users/profile
 Authorization: Bearer {{access_token}}
+
+### UPDATE MERCHANT BUSINESS DETAILS
+PUT {{base_url}}/users/profile/business
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+  "business_name": "Horology House Ltd.",
+  "business_type": "Private Limited Company",
+  "rc_number": "RC 1782940",
+  "website": "www.horologyhouse.com",
+  "address": "12 Marina, Lagos Island",
+  "city": "Lagos",
+  "country": "Nigeria",
+  "support_phone": "08012345678"
+}
 
 ### TRANSFER
 POST {{base_url}}/transactions/transfer

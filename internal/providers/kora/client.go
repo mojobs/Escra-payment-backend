@@ -78,6 +78,7 @@ type CheckoutRequest struct {
 	CustomerName      string
 	CustomerEmail     string
 	CustomerPhone     string
+	Narration         string
 	Description       string
 	Metadata          map[string]interface{}
 }
@@ -256,10 +257,10 @@ func (c *Client) InitializeCheckout(ctx context.Context, req CheckoutRequest) (*
 		RedirectURL       string                 `json:"redirect_url,omitempty"`
 		NotificationURL   string                 `json:"notification_url"`
 		Reference         string                 `json:"reference"`
+		Narration         string                 `json:"narration,omitempty"`
 		DefaultChannel    string                 `json:"default_channel,omitempty"`
 		Channels          []string               `json:"channels,omitempty"`
 		MerchantBearsCost bool                   `json:"merchant_bears_cost"`
-		Description       string                 `json:"description,omitempty"`
 		Customer          customer               `json:"customer"`
 		Metadata          map[string]interface{} `json:"metadata,omitempty"`
 	}
@@ -270,10 +271,10 @@ func (c *Client) InitializeCheckout(ctx context.Context, req CheckoutRequest) (*
 		RedirectURL:       req.RedirectURL,
 		NotificationURL:   req.NotificationURL,
 		Reference:         req.Reference,
+		Narration:         sanitizeKorapayNarration(firstNonEmpty(req.Narration, req.Description)),
 		DefaultChannel:    req.DefaultChannel,
 		Channels:          req.Channels,
 		MerchantBearsCost: req.MerchantBearsCost,
-		Description:       req.Description,
 		Customer: customer{
 			Name:  req.CustomerName,
 			Email: req.CustomerEmail,
@@ -312,6 +313,45 @@ func (c *Client) InitializeCheckout(ctx context.Context, req CheckoutRequest) (*
 	}
 
 	return response, nil
+}
+
+func sanitizeKorapayNarration(narration string) string {
+	candidate := strings.TrimSpace(narration)
+	if candidate == "" {
+		candidate = "ESCRA Payment"
+	}
+
+	var builder strings.Builder
+	builder.Grow(len(candidate))
+	lastWasSpace := false
+	for _, r := range candidate {
+		allowed := (r >= 'A' && r <= 'Z') ||
+			(r >= 'a' && r <= 'z') ||
+			(r >= '0' && r <= '9') ||
+			r == '-' ||
+			r == ' '
+		if !allowed {
+			r = ' '
+		}
+		if r == ' ' {
+			if lastWasSpace {
+				continue
+			}
+			lastWasSpace = true
+		} else {
+			lastWasSpace = false
+		}
+		builder.WriteRune(r)
+	}
+
+	sanitized := strings.TrimSpace(builder.String())
+	if sanitized == "" {
+		sanitized = "ESCRA Payment"
+	}
+	if len(sanitized) > 100 {
+		sanitized = strings.TrimSpace(sanitized[:100])
+	}
+	return sanitized
 }
 
 func (c *Client) VerifyIdentity(ctx context.Context, req VerifyIdentityRequest) (*VerifyIdentityResponse, error) {
@@ -640,6 +680,9 @@ func (c *Client) buildURL(requestPath string) string {
 	if parsedPath, err := url.Parse(requestPath); err == nil {
 		pathOnly = strings.TrimPrefix(parsedPath.Path, "/")
 		rawQuery = parsedPath.RawQuery
+	}
+	if strings.HasSuffix(strings.Trim(u.Path, "/"), "merchant/api/v1") && strings.HasPrefix(pathOnly, "merchant/api/v1/") {
+		pathOnly = strings.TrimPrefix(pathOnly, "merchant/api/v1/")
 	}
 	if strings.HasSuffix(strings.Trim(u.Path, "/"), "merchant") && strings.HasPrefix(pathOnly, "merchant/") {
 		pathOnly = strings.TrimPrefix(pathOnly, "merchant/")

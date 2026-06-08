@@ -8,16 +8,17 @@ import (
 
 type RegisterRequest struct {
 	Phone     string `json:"phone" binding:"required,min=10,max=15"`
-	Password  string `json:"password" binding:"required,min=8,max=15"`
+	Password  string `json:"password" binding:"required,min=6,max=72"`
 	FirstName string `json:"first_name" binding:"required,min=2,max=100"`
 	LastName  string `json:"last_name" binding:"required,min=2,max=100"`
 	Pin       string `json:"pin" binding:"required,min=4,max=6,numeric"`
 	Email     string `json:"email" binding:"omitempty,email"`
+	Role      string `json:"role" binding:"omitempty,oneof=buyer seller"`
 }
 
 type LoginRequest struct {
 	Phone    string `json:"phone" binding:"required"`
-	Password string `json:"password" binding:"required,min=8,max=15"`
+	Password string `json:"password" binding:"required,min=6,max=72"`
 	Pin      string `json:"pin,omitempty" binding:"omitempty,min=4,max=6,numeric"`
 }
 
@@ -33,7 +34,50 @@ type UserResponse struct {
 	LastName  string `json:"last_name"`
 	Phone     string `json:"phone"`
 	Email     string `json:"email,omitempty"`
+	Role      string `json:"role"`
 	Status    string `json:"status" binding:"omitempty,oneof=ACTIVE INACTIVE BLOCKED"`
+}
+
+type UserProfileResponse struct {
+	ID              string                  `json:"id"`
+	FirstName       string                  `json:"first_name"`
+	LastName        string                  `json:"last_name"`
+	Phone           string                  `json:"phone"`
+	Email           string                  `json:"email,omitempty"`
+	Role            string                  `json:"role"`
+	Status          string                  `json:"status"`
+	KYCStatus       string                  `json:"kyc_status"`
+	Metrics         UserProfileMetrics      `json:"metrics"`
+	MerchantDetails MerchantDetailsResponse `json:"merchant_details"`
+}
+
+type UserProfileMetrics struct {
+	CompletedOrders int64        `json:"completed_orders"`
+	TrustScore      int          `json:"trust_score"`
+	SalesVolume     money.Amount `json:"sales_volume_kobo"`
+	Rating          float64      `json:"rating"`
+}
+
+type MerchantDetailsResponse struct {
+	BusinessName string `json:"business_name,omitempty"`
+	BusinessType string `json:"business_type,omitempty"`
+	RCNumber     string `json:"rc_number,omitempty"`
+	Website      string `json:"website,omitempty"`
+	Address      string `json:"address,omitempty"`
+	City         string `json:"city,omitempty"`
+	Country      string `json:"country,omitempty"`
+	SupportPhone string `json:"support_phone,omitempty"`
+}
+
+type UpdateMerchantDetailsRequest struct {
+	BusinessName string `json:"business_name" binding:"omitempty,max=160"`
+	BusinessType string `json:"business_type" binding:"omitempty,max=120"`
+	RCNumber     string `json:"rc_number" binding:"omitempty,max=60"`
+	Website      string `json:"website" binding:"omitempty,max=255"`
+	Address      string `json:"address" binding:"omitempty,max=255"`
+	City         string `json:"city" binding:"omitempty,max=100"`
+	Country      string `json:"country" binding:"omitempty,max=100"`
+	SupportPhone string `json:"support_phone" binding:"omitempty,max=20"`
 }
 
 type ErrorResponse struct {
@@ -143,6 +187,20 @@ type KoraVirtualAccountResponse struct {
 	CreatedAt          time.Time `json:"created_at"`
 }
 
+type KoraWalletCheckoutRequest struct {
+	Amount          money.Amount `json:"amount_kobo" binding:"required"`
+	RedirectURL     string       `json:"redirect_url" binding:"omitempty,url,max=255"`
+	NotificationURL string       `json:"notification_url,omitempty" binding:"omitempty,url,max=255"`
+	Narration       string       `json:"narration,omitempty" binding:"omitempty,max=100"`
+	Currency        string       `json:"currency,omitempty" binding:"omitempty,len=3"`
+}
+
+type KoraWalletCheckoutResponse struct {
+	Success     bool   `json:"success"`
+	CheckoutURL string `json:"checkout_url"`
+	Reference   string `json:"reference"`
+}
+
 type KoraBalanceResponse struct {
 	Provider string        `json:"provider"`
 	Balances []KoraBalance `json:"balances"`
@@ -206,6 +264,7 @@ type CreateEscrowOrderRequest struct {
 type KoraEscrowCheckoutRequest struct {
 	RedirectURL       string   `json:"redirect_url" binding:"omitempty,url,max=255"`
 	NotificationURL   string   `json:"notification_url" binding:"omitempty,url,max=255"`
+	Narration         string   `json:"narration,omitempty" binding:"omitempty,max=100"`
 	Channels          []string `json:"channels,omitempty"`
 	DefaultChannel    string   `json:"default_channel,omitempty" binding:"omitempty,max=30"`
 	MerchantBearsCost bool     `json:"merchant_bears_cost"`

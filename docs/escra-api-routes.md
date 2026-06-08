@@ -30,6 +30,7 @@ Base URL: `/api/v1`
 - `last_name`
 - `pin`
 - `email` optional
+- `role` optional (`buyer` or `seller`)
 - returns:
 - `user`
 - `access_token`
@@ -90,7 +91,28 @@ Base URL: `/api/v1`
 - `last_name`
 - `phone`
 - `email`
+- `role`
 - `status`
+- `kyc_status`
+- `metrics`
+- `merchant_details`
+
+### Update merchant business details
+- `PUT /api/v1/users/profile/business`
+- auth: yes
+- purpose: stores seller business particulars for profile and trust screens
+- body:
+- `business_name` optional
+- `business_type` optional
+- `rc_number` optional
+- `website` optional
+- `address` optional
+- `city` optional
+- `country` optional
+- `support_phone` optional
+- returns:
+- `success`
+- `message`
 
 ### Get wallet
 - `GET /api/v1/wallets/`
@@ -104,6 +126,21 @@ Base URL: `/api/v1`
 - `balance_kobo`
 - `balance_formatted`
 - `currency`
+
+### Start Kora wallet checkout
+- `POST /api/v1/wallets/checkout/kora`
+- auth: yes
+- idempotency: yes
+- purpose: generates a Kora checkout URL for direct wallet funding
+- body:
+- `amount_kobo`
+- `redirect_url` optional
+- `narration` optional
+- returns:
+- `success`
+- `checkout_url`
+- `reference`
+- note: wallet balance is credited only after the Kora webhook confirms payment success
 
 ### Get limits
 - `GET /api/v1/limits/`
@@ -129,7 +166,7 @@ Base URL: `/api/v1`
 ### Transaction history
 - `GET /api/v1/transactions/history`
 - auth: yes
-- returns: list of transaction history items
+- returns: object containing `success`, `transactions`, and `count`
 
 ### Transaction by reference
 - `GET /api/v1/transactions/:reference`

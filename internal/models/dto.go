@@ -13,7 +13,7 @@ type RegisterRequest struct {
 	LastName  string `json:"last_name" binding:"required,min=2,max=100"`
 	Pin       string `json:"pin" binding:"required,min=4,max=6,numeric"`
 	Email     string `json:"email" binding:"omitempty,email"`
-	Role      string `json:"role" binding:"omitempty,oneof=buyer seller"`
+	Role      string `json:"role" binding:"omitempty"`
 }
 
 type LoginRequest struct {
@@ -39,16 +39,19 @@ type UserResponse struct {
 }
 
 type UserProfileResponse struct {
-	ID              string                  `json:"id"`
-	FirstName       string                  `json:"first_name"`
-	LastName        string                  `json:"last_name"`
-	Phone           string                  `json:"phone"`
-	Email           string                  `json:"email,omitempty"`
-	Role            string                  `json:"role"`
-	Status          string                  `json:"status"`
-	KYCStatus       string                  `json:"kyc_status"`
-	Metrics         UserProfileMetrics      `json:"metrics"`
-	MerchantDetails MerchantDetailsResponse `json:"merchant_details"`
+	ID                 string                  `json:"id"`
+	FirstName          string                  `json:"first_name"`
+	LastName           string                  `json:"last_name"`
+	Phone              string                  `json:"phone"`
+	Email              string                  `json:"email,omitempty"`
+	Role               string                  `json:"role"`
+	Status             string                  `json:"status"`
+	KYCStatus          string                  `json:"kyc_status"`
+	KYCDocumentType    string                  `json:"kyc_document_type,omitempty"`
+	KYCDocumentURL     string                  `json:"kyc_document_url,omitempty"`
+	KYCRejectionReason string                  `json:"kyc_rejection_reason,omitempty"`
+	Metrics            UserProfileMetrics      `json:"metrics"`
+	MerchantDetails    MerchantDetailsResponse `json:"merchant_details"`
 }
 
 type UserProfileMetrics struct {
@@ -78,6 +81,24 @@ type UpdateMerchantDetailsRequest struct {
 	City         string `json:"city" binding:"omitempty,max=100"`
 	Country      string `json:"country" binding:"omitempty,max=100"`
 	SupportPhone string `json:"support_phone" binding:"omitempty,max=20"`
+}
+
+type KYCUploadResponse struct {
+	Success     bool   `json:"success"`
+	DocumentURL string `json:"document_url"`
+	Status      string `json:"status"`
+}
+
+type AdminVerifyUserRequest struct {
+	Status string `json:"status" binding:"required"`
+	Reason string `json:"reason" binding:"omitempty,max=500"`
+}
+
+type AdminVerifyUserResponse struct {
+	Success   bool   `json:"success"`
+	UserID    string `json:"user_id"`
+	Status    string `json:"status"`
+	KYCStatus string `json:"kyc_status,omitempty"`
 }
 
 type ErrorResponse struct {

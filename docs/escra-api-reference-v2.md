@@ -250,6 +250,46 @@ Response:
 }
 ```
 
+### Upload KYC Document
+
+```http
+POST /api/v1/users/kyc/upload
+```
+
+Auth: bearer token required
+
+Content type:
+
+```http
+multipart/form-data
+```
+
+Fields:
+
+```text
+document_type=CAC_CERTIFICATE
+file=<PDF/JPG/JPEG/PNG binary file, max 10MB>
+```
+
+Allowed `document_type` values:
+
+```text
+CAC_CERTIFICATE
+PASSPORT
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "document_url": "http://localhost:8080/uploads/kyc/docs/user_d4176c58_1780950000000000000_cac_certificate.pdf",
+  "status": "UNDER_REVIEW"
+}
+```
+
+After upload, the user's account `status` remains `ACTIVE`, while `kyc_status` becomes `UNDER_REVIEW`.
+
 ## KYC
 
 ### Verify Identity With Kora
@@ -1239,6 +1279,41 @@ Response:
   "reference": "ESC-20260608-ABC123",
   "status": "REFUNDED",
   "resolution_note": "Seller could not provide delivery evidence."
+}
+```
+
+### Verify Or Reject User KYC
+
+```http
+POST /api/v1/admin/users/:userId/verify
+```
+
+Auth: admin key required
+
+Request body:
+
+```json
+{
+  "status": "ACTIVE",
+  "reason": "Documents approved successfully"
+}
+```
+
+Allowed `status` values:
+
+```text
+ACTIVE
+REJECTED
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "user_id": "d4176c58-5d37-450a-acab-dd8facf7441b",
+  "status": "ACTIVE",
+  "kyc_status": "VERIFIED"
 }
 ```
 

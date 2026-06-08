@@ -64,7 +64,7 @@ func main() {
 
 	//Initialize Controllers
 	authController := controllers.NewAuthController(authService)
-	userController := controllers.NewUserController(userService)
+	userController := controllers.NewUserController(userService, cfg.PublicBaseURL)
 	walletController := controllers.NewWalletController(walletService, providerService, cfg.PublicBaseURL)
 	transactionController := controllers.NewTransactionController(transactionService)
 	escrowController := controllers.NewEscrowController(escrowService, providerService, cfg.PublicBaseURL)
@@ -78,6 +78,7 @@ func main() {
 	}
 
 	router := gin.Default()
+	router.Static("/uploads", "./uploads")
 
 	//Apply general rate limiting to all routes
 	router.Use(middleware.RateLimiterMiddleware())
@@ -115,6 +116,7 @@ func main() {
 		{
 			admin.POST("/escrows/orders/:reference/resolve-dispute", escrowController.ResolveDispute)
 			admin.POST("/providers/kora/refunds", providerController.InitiateKoraRefund)
+			admin.POST("/users/:userId/verify", userController.AdminVerifyUser)
 		}
 
 		// Protected routes
@@ -128,6 +130,7 @@ func main() {
 			{
 				users.GET("/profile", userController.GetProfile)
 				users.PUT("/profile/business", userController.UpdateMerchantDetails)
+				users.POST("/kyc/upload", userController.UploadKYCDocument)
 			}
 
 			// Wallet routes

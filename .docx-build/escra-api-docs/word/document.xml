@@ -390,6 +390,45 @@
       </w:tcMar>
     </w:tcPr>
     <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Updates merchant business details for seller profile screens.</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">POST</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/users/kyc/upload</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Uploads a KYC document and marks the user as under review.</w:t></w:r></w:p>
   </w:tc></w:tr>
   </w:tbl>
 <w:p><w:pPr><w:pStyle w:val="TableSpacer"/></w:pPr><w:r><w:t xml:space="preserve"></w:t></w:r></w:p>
@@ -1465,6 +1504,45 @@
       </w:tcMar>
     </w:tcPr>
     <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Admin initiates a Kora refund.</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">POST</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/admin/users/:userId/verify</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Admin approves or rejects a user&apos;s KYC verification.</w:t></w:r></w:p>
   </w:tc></w:tr>
   </w:tbl>
 <w:p><w:pPr><w:pStyle w:val="TableSpacer"/></w:pPr><w:r><w:t xml:space="preserve"></w:t></w:r></w:p>

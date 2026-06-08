@@ -28,6 +28,7 @@ const sections = [
     rows: [
       ["GET", "/api/v1/users/profile", "Gets the logged-in user's profile, metrics, and merchant details."],
       ["PUT", "/api/v1/users/profile/business", "Updates merchant business details for seller profile screens."],
+      ["POST", "/api/v1/users/kyc/upload", "Uploads a KYC document and marks the user as under review."],
     ],
   },
   {
@@ -69,6 +70,7 @@ const sections = [
     rows: [
       ["POST", "/api/v1/admin/escrows/orders/:reference/resolve-dispute", "Admin resolves a dispute by releasing or refunding funds."],
       ["POST", "/api/v1/admin/providers/kora/refunds", "Admin initiates a Kora refund."],
+      ["POST", "/api/v1/admin/users/:userId/verify", "Admin approves or rejects a user's KYC verification."],
     ],
   },
   {

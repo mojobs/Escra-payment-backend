@@ -1,0 +1,2163 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:wp14="http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:w10="urn:schemas-microsoft-com:office:word" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml" xmlns:wpg="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup" xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk" xmlns:wne="http://schemas.microsoft.com/office/word/2006/wordml" xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape" mc:Ignorable="w14 wp14">
+  <w:body>
+    <w:p><w:pPr><w:pStyle w:val="Title"/></w:pPr><w:r><w:t xml:space="preserve">ESCRA API Docs</w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="Subtitle"/></w:pPr><w:r><w:t xml:space="preserve">APIs and what they do</w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="Meta"/></w:pPr><w:r><w:t xml:space="preserve">Base URL: http://localhost:8080</w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="Meta"/></w:pPr><w:r><w:t xml:space="preserve">API prefix: /api/v1</w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="Normal"/></w:pPr><w:r><w:t xml:space="preserve">Protected routes require Authorization: Bearer &lt;token&gt;. Admin routes require X-Admin-Key. Payment and state-changing POST routes should use Idempotency-Key.</w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="Heading1"/><w:keepNext/></w:pPr><w:r><w:t xml:space="preserve">Health</w:t></w:r></w:p>
+<w:tbl>
+    <w:tblPr>
+      <w:tblStyle w:val="TableGrid"/>
+      <w:tblW w:w="9360" w:type="dxa"/>
+      <w:tblInd w:w="120" w:type="dxa"/>
+      <w:tblLayout w:type="fixed"/>
+      <w:tblLook w:firstRow="1" w:lastRow="0" w:firstColumn="0" w:lastColumn="0" w:noHBand="1" w:noVBand="1"/>
+      <w:tblBorders>
+        <w:top w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:left w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:bottom w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:right w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:insideH w:val="single" w:sz="4" w:space="0" w:color="D7DEE8"/>
+        <w:insideV w:val="single" w:sz="4" w:space="0" w:color="D7DEE8"/>
+      </w:tblBorders>
+    </w:tblPr>
+    <w:tblGrid>
+      <w:gridCol w:w="980"/>
+      <w:gridCol w:w="4380"/>
+      <w:gridCol w:w="4000"/>
+    </w:tblGrid>
+    <w:tr><w:trPr><w:tblHeader/></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="E8EEF5"/>
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableHeader"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="19"/><w:szCs w:val="19"/><w:color w:val="0B2545"/></w:rPr><w:t xml:space="preserve">Method</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="E8EEF5"/>
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableHeader"/></w:pPr><w:r><w:rPr><w:b/><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="19"/><w:szCs w:val="19"/><w:color w:val="0B2545"/></w:rPr><w:t xml:space="preserve">API</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="E8EEF5"/>
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableHeader"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="19"/><w:szCs w:val="19"/><w:color w:val="0B2545"/></w:rPr><w:t xml:space="preserve">What It Does</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">GET</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/health</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Checks if the backend server is running.</w:t></w:r></w:p>
+  </w:tc></w:tr>
+  </w:tbl>
+<w:p><w:pPr><w:pStyle w:val="TableSpacer"/></w:pPr><w:r><w:t xml:space="preserve"></w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="Heading1"/><w:keepNext/></w:pPr><w:r><w:t xml:space="preserve">Authentication</w:t></w:r></w:p>
+<w:tbl>
+    <w:tblPr>
+      <w:tblStyle w:val="TableGrid"/>
+      <w:tblW w:w="9360" w:type="dxa"/>
+      <w:tblInd w:w="120" w:type="dxa"/>
+      <w:tblLayout w:type="fixed"/>
+      <w:tblLook w:firstRow="1" w:lastRow="0" w:firstColumn="0" w:lastColumn="0" w:noHBand="1" w:noVBand="1"/>
+      <w:tblBorders>
+        <w:top w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:left w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:bottom w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:right w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:insideH w:val="single" w:sz="4" w:space="0" w:color="D7DEE8"/>
+        <w:insideV w:val="single" w:sz="4" w:space="0" w:color="D7DEE8"/>
+      </w:tblBorders>
+    </w:tblPr>
+    <w:tblGrid>
+      <w:gridCol w:w="980"/>
+      <w:gridCol w:w="4380"/>
+      <w:gridCol w:w="4000"/>
+    </w:tblGrid>
+    <w:tr><w:trPr><w:tblHeader/></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="E8EEF5"/>
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableHeader"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="19"/><w:szCs w:val="19"/><w:color w:val="0B2545"/></w:rPr><w:t xml:space="preserve">Method</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="E8EEF5"/>
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableHeader"/></w:pPr><w:r><w:rPr><w:b/><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="19"/><w:szCs w:val="19"/><w:color w:val="0B2545"/></w:rPr><w:t xml:space="preserve">API</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="E8EEF5"/>
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableHeader"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="19"/><w:szCs w:val="19"/><w:color w:val="0B2545"/></w:rPr><w:t xml:space="preserve">What It Does</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">POST</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/auth/register</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Creates a new ESCRA user account.</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">POST</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/auth/login</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Logs a user in and returns authentication tokens.</w:t></w:r></w:p>
+  </w:tc></w:tr>
+  </w:tbl>
+<w:p><w:pPr><w:pStyle w:val="TableSpacer"/></w:pPr><w:r><w:t xml:space="preserve"></w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="Heading1"/><w:keepNext/></w:pPr><w:r><w:t xml:space="preserve">User</w:t></w:r></w:p>
+<w:tbl>
+    <w:tblPr>
+      <w:tblStyle w:val="TableGrid"/>
+      <w:tblW w:w="9360" w:type="dxa"/>
+      <w:tblInd w:w="120" w:type="dxa"/>
+      <w:tblLayout w:type="fixed"/>
+      <w:tblLook w:firstRow="1" w:lastRow="0" w:firstColumn="0" w:lastColumn="0" w:noHBand="1" w:noVBand="1"/>
+      <w:tblBorders>
+        <w:top w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:left w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:bottom w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:right w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:insideH w:val="single" w:sz="4" w:space="0" w:color="D7DEE8"/>
+        <w:insideV w:val="single" w:sz="4" w:space="0" w:color="D7DEE8"/>
+      </w:tblBorders>
+    </w:tblPr>
+    <w:tblGrid>
+      <w:gridCol w:w="980"/>
+      <w:gridCol w:w="4380"/>
+      <w:gridCol w:w="4000"/>
+    </w:tblGrid>
+    <w:tr><w:trPr><w:tblHeader/></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="E8EEF5"/>
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableHeader"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="19"/><w:szCs w:val="19"/><w:color w:val="0B2545"/></w:rPr><w:t xml:space="preserve">Method</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="E8EEF5"/>
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableHeader"/></w:pPr><w:r><w:rPr><w:b/><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="19"/><w:szCs w:val="19"/><w:color w:val="0B2545"/></w:rPr><w:t xml:space="preserve">API</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="E8EEF5"/>
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableHeader"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="19"/><w:szCs w:val="19"/><w:color w:val="0B2545"/></w:rPr><w:t xml:space="preserve">What It Does</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">GET</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/users/profile</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Gets the logged-in user&apos;s profile, metrics, and merchant details.</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">PUT</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/users/profile/business</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Updates merchant business details for seller profile screens.</w:t></w:r></w:p>
+  </w:tc></w:tr>
+  </w:tbl>
+<w:p><w:pPr><w:pStyle w:val="TableSpacer"/></w:pPr><w:r><w:t xml:space="preserve"></w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="Heading1"/><w:keepNext/></w:pPr><w:r><w:t xml:space="preserve">Wallets</w:t></w:r></w:p>
+<w:tbl>
+    <w:tblPr>
+      <w:tblStyle w:val="TableGrid"/>
+      <w:tblW w:w="9360" w:type="dxa"/>
+      <w:tblInd w:w="120" w:type="dxa"/>
+      <w:tblLayout w:type="fixed"/>
+      <w:tblLook w:firstRow="1" w:lastRow="0" w:firstColumn="0" w:lastColumn="0" w:noHBand="1" w:noVBand="1"/>
+      <w:tblBorders>
+        <w:top w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:left w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:bottom w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:right w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:insideH w:val="single" w:sz="4" w:space="0" w:color="D7DEE8"/>
+        <w:insideV w:val="single" w:sz="4" w:space="0" w:color="D7DEE8"/>
+      </w:tblBorders>
+    </w:tblPr>
+    <w:tblGrid>
+      <w:gridCol w:w="980"/>
+      <w:gridCol w:w="4380"/>
+      <w:gridCol w:w="4000"/>
+    </w:tblGrid>
+    <w:tr><w:trPr><w:tblHeader/></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="E8EEF5"/>
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableHeader"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="19"/><w:szCs w:val="19"/><w:color w:val="0B2545"/></w:rPr><w:t xml:space="preserve">Method</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="E8EEF5"/>
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableHeader"/></w:pPr><w:r><w:rPr><w:b/><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="19"/><w:szCs w:val="19"/><w:color w:val="0B2545"/></w:rPr><w:t xml:space="preserve">API</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="E8EEF5"/>
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableHeader"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="19"/><w:szCs w:val="19"/><w:color w:val="0B2545"/></w:rPr><w:t xml:space="preserve">What It Does</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">GET</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/wallets/balance</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Gets the user&apos;s wallet balance.</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">POST</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/wallets/checkout/kora</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Creates a Kora checkout link for direct wallet funding.</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">GET</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/wallets/</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Gets the user&apos;s wallet details.</w:t></w:r></w:p>
+  </w:tc></w:tr>
+  </w:tbl>
+<w:p><w:pPr><w:pStyle w:val="TableSpacer"/></w:pPr><w:r><w:t xml:space="preserve"></w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="Heading1"/><w:keepNext/></w:pPr><w:r><w:t xml:space="preserve">Transactions</w:t></w:r></w:p>
+<w:tbl>
+    <w:tblPr>
+      <w:tblStyle w:val="TableGrid"/>
+      <w:tblW w:w="9360" w:type="dxa"/>
+      <w:tblInd w:w="120" w:type="dxa"/>
+      <w:tblLayout w:type="fixed"/>
+      <w:tblLook w:firstRow="1" w:lastRow="0" w:firstColumn="0" w:lastColumn="0" w:noHBand="1" w:noVBand="1"/>
+      <w:tblBorders>
+        <w:top w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:left w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:bottom w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:right w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:insideH w:val="single" w:sz="4" w:space="0" w:color="D7DEE8"/>
+        <w:insideV w:val="single" w:sz="4" w:space="0" w:color="D7DEE8"/>
+      </w:tblBorders>
+    </w:tblPr>
+    <w:tblGrid>
+      <w:gridCol w:w="980"/>
+      <w:gridCol w:w="4380"/>
+      <w:gridCol w:w="4000"/>
+    </w:tblGrid>
+    <w:tr><w:trPr><w:tblHeader/></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="E8EEF5"/>
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableHeader"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="19"/><w:szCs w:val="19"/><w:color w:val="0B2545"/></w:rPr><w:t xml:space="preserve">Method</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="E8EEF5"/>
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableHeader"/></w:pPr><w:r><w:rPr><w:b/><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="19"/><w:szCs w:val="19"/><w:color w:val="0B2545"/></w:rPr><w:t xml:space="preserve">API</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="E8EEF5"/>
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableHeader"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="19"/><w:szCs w:val="19"/><w:color w:val="0B2545"/></w:rPr><w:t xml:space="preserve">What It Does</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">POST</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/transactions/transfer</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Transfers money between ESCRA wallets.</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">GET</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/transactions/history</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Gets the user&apos;s transaction history.</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">GET</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/transactions/:reference</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Gets one transaction by its reference.</w:t></w:r></w:p>
+  </w:tc></w:tr>
+  </w:tbl>
+<w:p><w:pPr><w:pStyle w:val="TableSpacer"/></w:pPr><w:r><w:t xml:space="preserve"></w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="Heading1"/><w:keepNext/></w:pPr><w:r><w:t xml:space="preserve">Escrow</w:t></w:r></w:p>
+<w:tbl>
+    <w:tblPr>
+      <w:tblStyle w:val="TableGrid"/>
+      <w:tblW w:w="9360" w:type="dxa"/>
+      <w:tblInd w:w="120" w:type="dxa"/>
+      <w:tblLayout w:type="fixed"/>
+      <w:tblLook w:firstRow="1" w:lastRow="0" w:firstColumn="0" w:lastColumn="0" w:noHBand="1" w:noVBand="1"/>
+      <w:tblBorders>
+        <w:top w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:left w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:bottom w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:right w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:insideH w:val="single" w:sz="4" w:space="0" w:color="D7DEE8"/>
+        <w:insideV w:val="single" w:sz="4" w:space="0" w:color="D7DEE8"/>
+      </w:tblBorders>
+    </w:tblPr>
+    <w:tblGrid>
+      <w:gridCol w:w="980"/>
+      <w:gridCol w:w="4380"/>
+      <w:gridCol w:w="4000"/>
+    </w:tblGrid>
+    <w:tr><w:trPr><w:tblHeader/></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="E8EEF5"/>
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableHeader"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="19"/><w:szCs w:val="19"/><w:color w:val="0B2545"/></w:rPr><w:t xml:space="preserve">Method</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="E8EEF5"/>
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableHeader"/></w:pPr><w:r><w:rPr><w:b/><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="19"/><w:szCs w:val="19"/><w:color w:val="0B2545"/></w:rPr><w:t xml:space="preserve">API</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="E8EEF5"/>
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableHeader"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="19"/><w:szCs w:val="19"/><w:color w:val="0B2545"/></w:rPr><w:t xml:space="preserve">What It Does</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">POST</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/escrows/orders</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Seller creates a new escrow order.</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">GET</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/escrows/orders</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Lists the user&apos;s escrow orders.</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">GET</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/escrows/orders/:reference</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Gets one escrow order.</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">GET</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/public/escrows/orders/:reference</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Gets the public order preview for buyers.</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">POST</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/escrows/orders/:reference/checkout/kora</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Starts Kora checkout for buyer payment.</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">POST</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/escrows/orders/:reference/fund</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Manually funds escrow from the buyer wallet.</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">POST</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/escrows/orders/:reference/ship</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Seller marks the item as shipped.</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">POST</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/escrows/orders/:reference/mark-delivered</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Seller marks the order as delivered.</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">POST</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/escrows/orders/:reference/confirm-delivery</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Buyer confirms delivery.</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">POST</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/escrows/orders/:reference/release</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Releases escrow funds to seller if eligible.</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">POST</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/escrows/orders/:reference/dispute</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Opens a dispute on an escrow order.</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">POST</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/escrows/orders/:reference/cancel</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Cancels an escrow order.</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">POST</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/escrows/orders/:reference/refund</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Refunds an escrow order.</w:t></w:r></w:p>
+  </w:tc></w:tr>
+  </w:tbl>
+<w:p><w:pPr><w:pStyle w:val="TableSpacer"/></w:pPr><w:r><w:t xml:space="preserve"></w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="Heading1"/><w:keepNext/></w:pPr><w:r><w:t xml:space="preserve">Admin</w:t></w:r></w:p>
+<w:tbl>
+    <w:tblPr>
+      <w:tblStyle w:val="TableGrid"/>
+      <w:tblW w:w="9360" w:type="dxa"/>
+      <w:tblInd w:w="120" w:type="dxa"/>
+      <w:tblLayout w:type="fixed"/>
+      <w:tblLook w:firstRow="1" w:lastRow="0" w:firstColumn="0" w:lastColumn="0" w:noHBand="1" w:noVBand="1"/>
+      <w:tblBorders>
+        <w:top w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:left w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:bottom w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:right w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:insideH w:val="single" w:sz="4" w:space="0" w:color="D7DEE8"/>
+        <w:insideV w:val="single" w:sz="4" w:space="0" w:color="D7DEE8"/>
+      </w:tblBorders>
+    </w:tblPr>
+    <w:tblGrid>
+      <w:gridCol w:w="980"/>
+      <w:gridCol w:w="4380"/>
+      <w:gridCol w:w="4000"/>
+    </w:tblGrid>
+    <w:tr><w:trPr><w:tblHeader/></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="E8EEF5"/>
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableHeader"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="19"/><w:szCs w:val="19"/><w:color w:val="0B2545"/></w:rPr><w:t xml:space="preserve">Method</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="E8EEF5"/>
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableHeader"/></w:pPr><w:r><w:rPr><w:b/><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="19"/><w:szCs w:val="19"/><w:color w:val="0B2545"/></w:rPr><w:t xml:space="preserve">API</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="E8EEF5"/>
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableHeader"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="19"/><w:szCs w:val="19"/><w:color w:val="0B2545"/></w:rPr><w:t xml:space="preserve">What It Does</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">POST</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/admin/escrows/orders/:reference/resolve-dispute</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Admin resolves a dispute by releasing or refunding funds.</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">POST</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/admin/providers/kora/refunds</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Admin initiates a Kora refund.</w:t></w:r></w:p>
+  </w:tc></w:tr>
+  </w:tbl>
+<w:p><w:pPr><w:pStyle w:val="TableSpacer"/></w:pPr><w:r><w:t xml:space="preserve"></w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="Heading1"/><w:keepNext/></w:pPr><w:r><w:t xml:space="preserve">Kora Provider</w:t></w:r></w:p>
+<w:tbl>
+    <w:tblPr>
+      <w:tblStyle w:val="TableGrid"/>
+      <w:tblW w:w="9360" w:type="dxa"/>
+      <w:tblInd w:w="120" w:type="dxa"/>
+      <w:tblLayout w:type="fixed"/>
+      <w:tblLook w:firstRow="1" w:lastRow="0" w:firstColumn="0" w:lastColumn="0" w:noHBand="1" w:noVBand="1"/>
+      <w:tblBorders>
+        <w:top w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:left w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:bottom w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:right w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:insideH w:val="single" w:sz="4" w:space="0" w:color="D7DEE8"/>
+        <w:insideV w:val="single" w:sz="4" w:space="0" w:color="D7DEE8"/>
+      </w:tblBorders>
+    </w:tblPr>
+    <w:tblGrid>
+      <w:gridCol w:w="980"/>
+      <w:gridCol w:w="4380"/>
+      <w:gridCol w:w="4000"/>
+    </w:tblGrid>
+    <w:tr><w:trPr><w:tblHeader/></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="E8EEF5"/>
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableHeader"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="19"/><w:szCs w:val="19"/><w:color w:val="0B2545"/></w:rPr><w:t xml:space="preserve">Method</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="E8EEF5"/>
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableHeader"/></w:pPr><w:r><w:rPr><w:b/><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="19"/><w:szCs w:val="19"/><w:color w:val="0B2545"/></w:rPr><w:t xml:space="preserve">API</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="E8EEF5"/>
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableHeader"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="19"/><w:szCs w:val="19"/><w:color w:val="0B2545"/></w:rPr><w:t xml:space="preserve">What It Does</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">POST</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/providers/kora/kyc/verify</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Verifies user KYC with Kora.</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">GET</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/providers/kora/banks</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Lists Kora-supported banks.</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">GET</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/providers/kora/banks/resolve</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Resolves a bank account name.</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">GET</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/providers/kora/balances</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Gets Kora balances for reconciliation.</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">POST</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/providers/kora/virtual-accounts</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Creates a Kora virtual bank account for pay-ins.</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">GET</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/providers/kora/virtual-accounts</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Lists the user&apos;s Kora virtual accounts.</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">POST</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/providers/kora/payouts/bank</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Sends money to a seller&apos;s bank account.</w:t></w:r></w:p>
+  </w:tc></w:tr>
+  </w:tbl>
+<w:p><w:pPr><w:pStyle w:val="TableSpacer"/></w:pPr><w:r><w:t xml:space="preserve"></w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="Heading1"/><w:keepNext/></w:pPr><w:r><w:t xml:space="preserve">Quidax Provider</w:t></w:r></w:p>
+<w:tbl>
+    <w:tblPr>
+      <w:tblStyle w:val="TableGrid"/>
+      <w:tblW w:w="9360" w:type="dxa"/>
+      <w:tblInd w:w="120" w:type="dxa"/>
+      <w:tblLayout w:type="fixed"/>
+      <w:tblLook w:firstRow="1" w:lastRow="0" w:firstColumn="0" w:lastColumn="0" w:noHBand="1" w:noVBand="1"/>
+      <w:tblBorders>
+        <w:top w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:left w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:bottom w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:right w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:insideH w:val="single" w:sz="4" w:space="0" w:color="D7DEE8"/>
+        <w:insideV w:val="single" w:sz="4" w:space="0" w:color="D7DEE8"/>
+      </w:tblBorders>
+    </w:tblPr>
+    <w:tblGrid>
+      <w:gridCol w:w="980"/>
+      <w:gridCol w:w="4380"/>
+      <w:gridCol w:w="4000"/>
+    </w:tblGrid>
+    <w:tr><w:trPr><w:tblHeader/></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="E8EEF5"/>
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableHeader"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="19"/><w:szCs w:val="19"/><w:color w:val="0B2545"/></w:rPr><w:t xml:space="preserve">Method</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="E8EEF5"/>
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableHeader"/></w:pPr><w:r><w:rPr><w:b/><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="19"/><w:szCs w:val="19"/><w:color w:val="0B2545"/></w:rPr><w:t xml:space="preserve">API</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="E8EEF5"/>
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableHeader"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="19"/><w:szCs w:val="19"/><w:color w:val="0B2545"/></w:rPr><w:t xml:space="preserve">What It Does</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">POST</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/providers/quidax/withdrawals</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Initiates a crypto withdrawal or transfer through Quidax.</w:t></w:r></w:p>
+  </w:tc></w:tr>
+  </w:tbl>
+<w:p><w:pPr><w:pStyle w:val="TableSpacer"/></w:pPr><w:r><w:t xml:space="preserve"></w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="Heading1"/><w:keepNext/></w:pPr><w:r><w:t xml:space="preserve">Webhooks</w:t></w:r></w:p>
+<w:tbl>
+    <w:tblPr>
+      <w:tblStyle w:val="TableGrid"/>
+      <w:tblW w:w="9360" w:type="dxa"/>
+      <w:tblInd w:w="120" w:type="dxa"/>
+      <w:tblLayout w:type="fixed"/>
+      <w:tblLook w:firstRow="1" w:lastRow="0" w:firstColumn="0" w:lastColumn="0" w:noHBand="1" w:noVBand="1"/>
+      <w:tblBorders>
+        <w:top w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:left w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:bottom w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:right w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:insideH w:val="single" w:sz="4" w:space="0" w:color="D7DEE8"/>
+        <w:insideV w:val="single" w:sz="4" w:space="0" w:color="D7DEE8"/>
+      </w:tblBorders>
+    </w:tblPr>
+    <w:tblGrid>
+      <w:gridCol w:w="980"/>
+      <w:gridCol w:w="4380"/>
+      <w:gridCol w:w="4000"/>
+    </w:tblGrid>
+    <w:tr><w:trPr><w:tblHeader/></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="E8EEF5"/>
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableHeader"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="19"/><w:szCs w:val="19"/><w:color w:val="0B2545"/></w:rPr><w:t xml:space="preserve">Method</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="E8EEF5"/>
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableHeader"/></w:pPr><w:r><w:rPr><w:b/><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="19"/><w:szCs w:val="19"/><w:color w:val="0B2545"/></w:rPr><w:t xml:space="preserve">API</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="E8EEF5"/>
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableHeader"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="19"/><w:szCs w:val="19"/><w:color w:val="0B2545"/></w:rPr><w:t xml:space="preserve">What It Does</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">POST</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/webhooks/kora</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Receives Kora payment, checkout, payout, and refund events.</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">POST</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/webhooks/quidax</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Receives Quidax crypto transaction events.</w:t></w:r></w:p>
+  </w:tc></w:tr>
+  </w:tbl>
+<w:p><w:pPr><w:pStyle w:val="TableSpacer"/></w:pPr><w:r><w:t xml:space="preserve"></w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="Heading1"/><w:keepNext/></w:pPr><w:r><w:t xml:space="preserve">Limits</w:t></w:r></w:p>
+<w:tbl>
+    <w:tblPr>
+      <w:tblStyle w:val="TableGrid"/>
+      <w:tblW w:w="9360" w:type="dxa"/>
+      <w:tblInd w:w="120" w:type="dxa"/>
+      <w:tblLayout w:type="fixed"/>
+      <w:tblLook w:firstRow="1" w:lastRow="0" w:firstColumn="0" w:lastColumn="0" w:noHBand="1" w:noVBand="1"/>
+      <w:tblBorders>
+        <w:top w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:left w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:bottom w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:right w:val="single" w:sz="4" w:space="0" w:color="B7C2D0"/>
+        <w:insideH w:val="single" w:sz="4" w:space="0" w:color="D7DEE8"/>
+        <w:insideV w:val="single" w:sz="4" w:space="0" w:color="D7DEE8"/>
+      </w:tblBorders>
+    </w:tblPr>
+    <w:tblGrid>
+      <w:gridCol w:w="980"/>
+      <w:gridCol w:w="4380"/>
+      <w:gridCol w:w="4000"/>
+    </w:tblGrid>
+    <w:tr><w:trPr><w:tblHeader/></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="E8EEF5"/>
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableHeader"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="19"/><w:szCs w:val="19"/><w:color w:val="0B2545"/></w:rPr><w:t xml:space="preserve">Method</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="E8EEF5"/>
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableHeader"/></w:pPr><w:r><w:rPr><w:b/><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="19"/><w:szCs w:val="19"/><w:color w:val="0B2545"/></w:rPr><w:t xml:space="preserve">API</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="E8EEF5"/>
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableHeader"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="19"/><w:szCs w:val="19"/><w:color w:val="0B2545"/></w:rPr><w:t xml:space="preserve">What It Does</w:t></w:r></w:p>
+  </w:tc></w:tr><w:tr><w:trPr></w:trPr><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="980" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableMethod"/></w:pPr><w:r><w:t xml:space="preserve">GET</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4380" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableAPI"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">/api/v1/limits/</w:t></w:r></w:p>
+  </w:tc><w:tc>
+    <w:tcPr>
+      <w:tcW w:w="4000" w:type="dxa"/>
+      
+      <w:vAlign w:val="center"/>
+      <w:tcMar>
+        <w:top w:w="80" w:type="dxa"/>
+        <w:bottom w:w="80" w:type="dxa"/>
+        <w:start w:w="120" w:type="dxa"/>
+        <w:end w:w="120" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p><w:pPr><w:pStyle w:val="TableText"/></w:pPr><w:r><w:t xml:space="preserve">Gets the logged-in user&apos;s transaction limits and usage.</w:t></w:r></w:p>
+  </w:tc></w:tr>
+  </w:tbl>
+<w:p><w:pPr><w:pStyle w:val="TableSpacer"/></w:pPr><w:r><w:t xml:space="preserve"></w:t></w:r></w:p>
+    <w:sectPr>
+      <w:pgSz w:w="12240" w:h="15840"/>
+      <w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="708" w:footer="708" w:gutter="0"/>
+      <w:cols w:space="708"/>
+      <w:docGrid w:linePitch="360"/>
+    </w:sectPr>
+  </w:body>
+</w:document>

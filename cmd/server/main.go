@@ -65,7 +65,7 @@ func main() {
 	//Initialize Controllers
 	authController := controllers.NewAuthController(authService)
 	userController := controllers.NewUserController(userService)
-	walletController := controllers.NewWalletController(walletService)
+	walletController := controllers.NewWalletController(walletService, providerService, cfg.PublicBaseURL)
 	transactionController := controllers.NewTransactionController(transactionService)
 	escrowController := controllers.NewEscrowController(escrowService, providerService, cfg.PublicBaseURL)
 	limitController := controllers.NewLimitController(limitService)
@@ -127,12 +127,14 @@ func main() {
 			users := protected.Group("/users")
 			{
 				users.GET("/profile", userController.GetProfile)
+				users.PUT("/profile/business", userController.UpdateMerchantDetails)
 			}
 
 			// Wallet routes
 			wallets := protected.Group("/wallets")
 			{
 				wallets.GET("/balance", walletController.GetBalance)
+				wallets.POST("/checkout/kora", middleware.StrictRateLimiterMiddleware(), walletController.InitiateKoraCheckout)
 				wallets.GET("/", walletController.GetWallet)
 			}
 

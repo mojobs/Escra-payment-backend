@@ -1,10 +1,12 @@
 package controllers
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
+
 	"github.com/mojobs/lara-payment-backend.git/internal/models"
 	"github.com/mojobs/lara-payment-backend.git/internal/services"
-	"net/http"
 )
 
 type UserController struct {
@@ -18,7 +20,7 @@ func NewUserController(userService *services.UserService) *UserController {
 func (ctrl *UserController) GetProfile(c *gin.Context) {
 	userID := c.GetString("user_id")
 
-	user, err := ctrl.userService.GetUserByID(userID)
+	profile, err := ctrl.userService.GetProfile(userID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, models.ErrorResponse{
 			Error:   "user_not_found",
@@ -26,19 +28,31 @@ func (ctrl *UserController) GetProfile(c *gin.Context) {
 		})
 		return
 	}
-	c.JSON(http.StatusOK, models.UserResponse{
-		ID:        user.ID.String(),
-		Phone:     user.Phone,
-		FirstName: user.FirstName,
-		LastName:  user.LastName,
-		Email:     emailString(user.Email),
-		Status:    user.Status,
-	})
+	c.JSON(http.StatusOK, profile)
 }
 
-func emailString(email *string) string {
-	if email == nil {
-		return ""
+func (ctrl *UserController) UpdateMerchantDetails(c *gin.Context) {
+	userID := c.GetString("user_id")
+
+	var req models.UpdateMerchantDetailsRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Error:   "validation_error",
+			Message: err.Error(),
+		})
+		return
 	}
-	return *email
+
+	if err := ctrl.userService.UpdateMerchantDetails(userID, &req); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Error:   "merchant_profile_update_failed",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, models.SuccessResponse{
+		Success: true,
+		Message: "Merchant profile details updated successfully",
+	})
 }

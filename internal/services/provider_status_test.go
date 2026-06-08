@@ -45,3 +45,14 @@ func TestProviderStatusFromWebhook(t *testing.T) {
 		t.Fatalf("got %q, want SUCCESS", got)
 	}
 }
+
+func TestStringFromWebhookReadsNumericKoraAmount(t *testing.T) {
+	payload := json.RawMessage(`{"event":"charge.success","data":{"reference":"ESCROW-1","amount":1800.50,"fee":25}}`)
+
+	if got := stringFromWebhook(payload, "amount"); got != "1800.50" {
+		t.Fatalf("got amount %q", got)
+	}
+	if got := stringFromWebhook(payload, "fee"); got != "25" {
+		t.Fatalf("got fee %q", got)
+	}
+}

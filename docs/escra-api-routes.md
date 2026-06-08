@@ -7,7 +7,8 @@ Base URL: `/api/v1`
 - All fiat money uses integer minor units.
 - Example: `100000` means `NGN 1000.00`.
 - Protected routes require `Authorization: Bearer <access_token>`.
-- Protected `POST` routes also require `Idempotency-Key: <uuid>`.
+- Protected JSON/payment `POST` routes also require `Idempotency-Key: <uuid>`.
+- Multipart KYC document upload does not require an idempotency key.
 - Admin routes require `X-Admin-Key: <admin_key>`.
 - Common error shape:
 - `error`
@@ -113,6 +114,19 @@ Base URL: `/api/v1`
 - returns:
 - `success`
 - `message`
+
+### Upload KYC document
+- `POST /api/v1/users/kyc/upload`
+- auth: yes
+- content type: `multipart/form-data`
+- purpose: uploads seller/buyer KYC document and moves `kyc_status` to `UNDER_REVIEW`
+- fields:
+- `document_type` required (`CAC_CERTIFICATE` or `PASSPORT`)
+- `file` required (`PDF`, `JPG`, `JPEG`, or `PNG`, max 10MB)
+- returns:
+- `success`
+- `document_url`
+- `status`
 
 ### Get wallet
 - `GET /api/v1/wallets/`
@@ -444,6 +458,20 @@ Base URL: `/api/v1`
 - `currency` optional
 - `reason` optional
 - returns: provider transaction response
+
+### Verify or reject user KYC
+- `POST /api/v1/admin/users/:userId/verify`
+- auth: admin header
+- headers:
+- `X-Admin-Key`
+- body:
+- `status` (`ACTIVE` or `REJECTED`)
+- `reason` optional
+- returns:
+- `success`
+- `user_id`
+- `status`
+- `kyc_status`
 
 ## Main response objects
 

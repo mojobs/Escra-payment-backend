@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -28,6 +29,10 @@ func IdempotencyMiddleware(idempotencyService *services.IdempotencyService) gin.
 	return func(c *gin.Context) {
 		// Only apply to POST requests
 		if c.Request.Method != http.MethodPost {
+			c.Next()
+			return
+		}
+		if strings.HasPrefix(strings.ToLower(c.GetHeader("Content-Type")), "multipart/form-data") {
 			c.Next()
 			return
 		}
@@ -58,12 +63,19 @@ func IdempotencyMiddleware(idempotencyService *services.IdempotencyService) gin.
 		endpoint := c.Request.URL.Path
 
 		//Read request body before reserving the key so concurrent retries race on the same request hash.
-		var requestBody interface{}
+		var requestBody interface{} = map[string]interface{}{}
 		var bodyBytes []byte
 		if c.Request.Body != nil {
 			bodyBytes, _ = io.ReadAll(c.Request.Body)
 			c.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-			_ = json.Unmarshal(bodyBytes, &requestBody)
+			trimmedBody := bytes.TrimSpace(bodyBytes)
+			if len(trimmedBody) > 0 {
+				if json.Valid(trimmedBody) {
+					requestBody = json.RawMessage(append([]byte(nil), trimmedBody...))
+				} else {
+					requestBody = string(trimmedBody)
+				}
+			}
 		}
 		requestHash := services.RequestHash(bodyBytes)
 

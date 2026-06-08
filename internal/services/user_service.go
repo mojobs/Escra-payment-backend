@@ -26,9 +26,15 @@ func (s *UserService) CreateUser(req *models.RegisterRequest) (*models.User, err
 }
 
 func (s *UserService) createUser(tx *gorm.DB, req *models.RegisterRequest) (*models.User, error) {
+	if !models.IsValidUserRole(req.Role) {
+		return nil, errors.New("invalid role; use buyer or seller")
+	}
+
 	var existingUser models.User
 	if err := tx.Where("phone = ?", req.Phone).First(&existingUser).Error; err == nil {
 		return nil, errors.New("Phone number already registered")
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
 	}
 
 	hashedPassword, err := utils.HashPassword(req.Password)
@@ -43,7 +49,14 @@ func (s *UserService) createUser(tx *gorm.DB, req *models.RegisterRequest) (*mod
 
 	var email *string
 	if req.Email != "" {
-		email = &req.Email
+		normalizedEmail := strings.ToLower(strings.TrimSpace(req.Email))
+		var existingEmailUser models.User
+		if err := tx.Where("LOWER(email) = ?", normalizedEmail).First(&existingEmailUser).Error; err == nil {
+			return nil, errors.New("Email address already registered")
+		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, err
+		}
+		email = &normalizedEmail
 	}
 
 	user := &models.User{
@@ -58,7 +71,7 @@ func (s *UserService) createUser(tx *gorm.DB, req *models.RegisterRequest) (*mod
 	}
 
 	if err := tx.Create(user).Error; err != nil {
-		return nil, err
+		return nil, userCreateError(err)
 	}
 
 	return user, nil
@@ -121,15 +134,18 @@ func (s *UserService) GetProfile(id string) (*models.UserProfileResponse, error)
 	}
 
 	return &models.UserProfileResponse{
-		ID:        user.ID.String(),
-		Phone:     user.Phone,
-		FirstName: user.FirstName,
-		LastName:  user.LastName,
-		Email:     userEmail(user),
-		Role:      models.NormalizeUserRole(user.Role),
-		Status:    user.Status,
-		KYCStatus: firstNonEmpty(user.KYCStatus, "UNVERIFIED"),
-		Metrics:   metrics,
+		ID:                 user.ID.String(),
+		Phone:              user.Phone,
+		FirstName:          user.FirstName,
+		LastName:           user.LastName,
+		Email:              userEmail(user),
+		Role:               models.NormalizeUserRole(user.Role),
+		Status:             user.Status,
+		KYCStatus:          firstNonEmpty(user.KYCStatus, "UNVERIFIED"),
+		KYCDocumentType:    user.KYCDocumentType,
+		KYCDocumentURL:     user.KYCDocumentURL,
+		KYCRejectionReason: user.KYCRejectionReason,
+		Metrics:            metrics,
 		MerchantDetails: models.MerchantDetailsResponse{
 			BusinessName: user.BusinessName,
 			BusinessType: user.BusinessType,
@@ -140,6 +156,93 @@ func (s *UserService) GetProfile(id string) (*models.UserProfileResponse, error)
 			Country:      user.BusinessCountry,
 			SupportPhone: user.BusinessSupportPhone,
 		},
+	}, nil
+}
+
+func (s *UserService) UpdateKYCDocument(userID, documentType, documentURL string) (*models.KYCUploadResponse, error) {
+	parsedUserID, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, errors.New("invalid user ID")
+	}
+
+	documentType = models.NormalizeKYCDocumentType(documentType)
+	if !models.IsValidKYCDocumentType(documentType) {
+		return nil, errors.New("document_type must be CAC_CERTIFICATE or PASSPORT")
+	}
+
+	now := time.Now().UTC()
+	result := s.db.Model(&models.User{}).
+		Where("id = ?", parsedUserID).
+		Updates(map[string]interface{}{
+			"kyc_status":               "UNDER_REVIEW",
+			"kyc_document_type":        documentType,
+			"kyc_document_url":         strings.TrimSpace(documentURL),
+			"kyc_document_uploaded_at": &now,
+			"kyc_verified_at":          nil,
+			"kyc_rejection_reason":     "",
+		})
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	if result.RowsAffected == 0 {
+		return nil, errors.New("user not found")
+	}
+
+	return &models.KYCUploadResponse{
+		Success:     true,
+		DocumentURL: strings.TrimSpace(documentURL),
+		Status:      "UNDER_REVIEW",
+	}, nil
+}
+
+func (s *UserService) AdminVerifyUser(userID string, req *models.AdminVerifyUserRequest) (*models.AdminVerifyUserResponse, error) {
+	parsedUserID, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, errors.New("invalid user ID")
+	}
+
+	requestedStatus := strings.ToUpper(strings.TrimSpace(req.Status))
+	updates := map[string]interface{}{}
+	responseStatus := requestedStatus
+	kycStatus := ""
+
+	switch requestedStatus {
+	case "ACTIVE", "APPROVED", "VERIFIED":
+		now := time.Now().UTC()
+		responseStatus = "ACTIVE"
+		kycStatus = "VERIFIED"
+		updates = map[string]interface{}{
+			"status":               "ACTIVE",
+			"kyc_status":           "VERIFIED",
+			"kyc_provider":         "ADMIN",
+			"kyc_reference":        "ADMIN-" + uuid.NewString(),
+			"kyc_verified_at":      &now,
+			"kyc_rejection_reason": "",
+		}
+	case "REJECTED":
+		kycStatus = "REJECTED"
+		updates = map[string]interface{}{
+			"kyc_status":           "REJECTED",
+			"kyc_verified_at":      nil,
+			"kyc_rejection_reason": strings.TrimSpace(req.Reason),
+		}
+	default:
+		return nil, errors.New("status must be ACTIVE or REJECTED")
+	}
+
+	result := s.db.Model(&models.User{}).Where("id = ?", parsedUserID).Updates(updates)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	if result.RowsAffected == 0 {
+		return nil, errors.New("user not found")
+	}
+
+	return &models.AdminVerifyUserResponse{
+		Success:   true,
+		UserID:    parsedUserID.String(),
+		Status:    responseStatus,
+		KYCStatus: kycStatus,
 	}, nil
 }
 
@@ -227,6 +330,22 @@ func clampScore(score int) int {
 		return 100
 	}
 	return score
+}
+
+func userCreateError(err error) error {
+	if err == nil {
+		return nil
+	}
+	message := strings.ToLower(err.Error())
+	if strings.Contains(message, "duplicate") || strings.Contains(message, "23505") || strings.Contains(message, "unique constraint") {
+		if strings.Contains(message, "email") {
+			return errors.New("Email address already registered")
+		}
+		if strings.Contains(message, "phone") {
+			return errors.New("Phone number already registered")
+		}
+	}
+	return err
 }
 
 func (s *UserService) ValidateUser(phone, password string) (*models.User, error) {

@@ -4,6 +4,7 @@
 @escrow_reference = paste-escrow-reference-here
 @admin_key = replace-with-admin-api-key
 @payment_reference = paste-kora-payment-reference-here
+@user_id = paste-user-id-here
 
 ### REGISTER
 POST {{base_url}}/auth/register
@@ -63,6 +64,22 @@ Content-Type: application/json
   "country": "Nigeria",
   "support_phone": "08012345678"
 }
+
+### UPLOAD KYC DOCUMENT
+POST {{base_url}}/users/kyc/upload
+Authorization: Bearer {{access_token}}
+Content-Type: multipart/form-data; boundary=escra-kyc-boundary
+
+--escra-kyc-boundary
+Content-Disposition: form-data; name="document_type"
+
+CAC_CERTIFICATE
+--escra-kyc-boundary
+Content-Disposition: form-data; name="file"; filename="sample-cac.pdf"
+Content-Type: application/pdf
+
+< ./sample-cac.pdf
+--escra-kyc-boundary--
 
 ### TRANSFER
 POST {{base_url}}/transactions/transfer
@@ -299,4 +316,24 @@ Content-Type: application/json
   "amount_kobo": 150000,
   "currency": "NGN",
   "reason": "Dispute resolved in favor of buyer"
+}
+
+### ADMIN VERIFY USER KYC
+POST {{base_url}}/admin/users/{{user_id}}/verify
+X-Admin-Key: {{admin_key}}
+Content-Type: application/json
+
+{
+  "status": "ACTIVE",
+  "reason": "Documents approved successfully"
+}
+
+### ADMIN REJECT USER KYC
+POST {{base_url}}/admin/users/{{user_id}}/verify
+X-Admin-Key: {{admin_key}}
+Content-Type: application/json
+
+{
+  "status": "REJECTED",
+  "reason": "Document image is unclear"
 }

@@ -1,10 +1,12 @@
 package services
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -63,7 +65,7 @@ func (s *IdempotencyService) ReserveKey(key string, userID uuid.UUID, endpoint s
 		return nil, err
 	}
 
-	reqJSON, err := json.Marshal(requestBody)
+	reqJSON, err := jsonForDB(requestBody, "{}")
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +75,8 @@ func (s *IdempotencyService) ReserveKey(key string, userID uuid.UUID, endpoint s
 		UserID:      userID,
 		Endpoint:    endpoint,
 		RequestHash: requestHash,
-		RequestBody: string(reqJSON),
+		RequestBody: reqJSON,
+		Response:    "null",
 		State:       "PENDING",
 		ExpiresAt:   time.Now().Add(24 * time.Hour),
 	}
@@ -88,7 +91,7 @@ func (s *IdempotencyService) ReserveKey(key string, userID uuid.UUID, endpoint s
 //StoreKey stores a new idempotency key with its response
 
 func (s *IdempotencyService) StoreKey(key string, userID uuid.UUID, endpoint string, requestBody, response interface{}, statusCode int) error {
-	resJSON, err := json.Marshal(response)
+	resJSON, err := jsonForDB(response, "null")
 	if err != nil {
 		return err
 	}
@@ -96,14 +99,14 @@ func (s *IdempotencyService) StoreKey(key string, userID uuid.UUID, endpoint str
 	return s.db.Model(&models.IdempotencyKey{}).
 		Where("key = ? AND user_id = ? AND endpoint = ?", key, userID, endpoint).
 		Updates(map[string]interface{}{
-			"response":    string(resJSON),
+			"response":    resJSON,
 			"status_code": statusCode,
 			"state":       "COMPLETED",
 		}).Error
 }
 
 func (s *IdempotencyService) StoreFailure(key string, userID uuid.UUID, endpoint string, response interface{}, statusCode int) error {
-	resJSON, err := json.Marshal(response)
+	resJSON, err := jsonForDB(response, "null")
 	if err != nil {
 		return err
 	}
@@ -111,7 +114,7 @@ func (s *IdempotencyService) StoreFailure(key string, userID uuid.UUID, endpoint
 	return s.db.Model(&models.IdempotencyKey{}).
 		Where("key = ? AND user_id = ? AND endpoint = ?", key, userID, endpoint).
 		Updates(map[string]interface{}{
-			"response":    string(resJSON),
+			"response":    resJSON,
 			"status_code": statusCode,
 			"state":       "FAILED",
 		}).Error
@@ -119,4 +122,47 @@ func (s *IdempotencyService) StoreFailure(key string, userID uuid.UUID, endpoint
 
 func (s *IdempotencyService) CleanupExpired() error {
 	return s.db.Where("expires_at < ?", time.Now()).Delete(&models.IdempotencyKey{}).Error
+}
+
+func jsonForDB(value interface{}, emptyValue string) (string, error) {
+	if value == nil {
+		return emptyValue, nil
+	}
+
+	switch typed := value.(type) {
+	case json.RawMessage:
+		return validJSONOrEmpty([]byte(typed), emptyValue)
+	case []byte:
+		return validJSONOrEmpty(typed, emptyValue)
+	case string:
+		trimmed := strings.TrimSpace(typed)
+		if trimmed == "" {
+			return emptyValue, nil
+		}
+		if json.Valid([]byte(trimmed)) {
+			return trimmed, nil
+		}
+		encoded, err := json.Marshal(trimmed)
+		if err != nil {
+			return "", err
+		}
+		return string(encoded), nil
+	default:
+		encoded, err := json.Marshal(value)
+		if err != nil {
+			return "", err
+		}
+		return validJSONOrEmpty(encoded, emptyValue)
+	}
+}
+
+func validJSONOrEmpty(payload []byte, emptyValue string) (string, error) {
+	trimmed := bytes.TrimSpace(payload)
+	if len(trimmed) == 0 {
+		return emptyValue, nil
+	}
+	if !json.Valid(trimmed) {
+		return "", errors.New("request or response payload is not valid JSON")
+	}
+	return string(trimmed), nil
 }

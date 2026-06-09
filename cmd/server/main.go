@@ -46,7 +46,7 @@ func main() {
 	limitService := services.NewTransactionLimitService(db)
 	authService := services.NewAuthService(userService, walletService, limitService, jwtService)
 	transactionService := services.NewTransactionService(db, userService, walletService, limitService)
-	escrowService := services.NewEscrowService(db, userService, walletService, limitService)
+	escrowService := services.NewEscrowService(db, userService, walletService, limitService, cfg.PublicBaseURL)
 	idempotencyService := services.NewIdempotencyService(db)
 	koraWebhookSecret := cfg.KoraWebhookSecret
 	if koraWebhookSecret == "" {
@@ -59,6 +59,7 @@ func main() {
 		limitService,
 		kora.NewClient(cfg.KoraBaseURL, cfg.KoraPublicKey, cfg.KoraSecretKey),
 		quidax.NewClient(cfg.QuidaxBaseURL, cfg.QuidaxSecretKey),
+		cfg.PublicBaseURL,
 	)
 	webhookService := services.NewWebhookService(db, escrowService)
 

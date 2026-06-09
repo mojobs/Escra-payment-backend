@@ -42,9 +42,14 @@ type ProviderService struct {
 	transactionLimitService *TransactionLimitService
 	koraClient              KoraClient
 	quidaxClient            QuidaxClient
+	publicBaseURL           string
 }
 
-func NewProviderService(db *gorm.DB, userService *UserService, walletService *WalletService, limitService *TransactionLimitService, koraClient KoraClient, quidaxClient QuidaxClient) *ProviderService {
+func NewProviderService(db *gorm.DB, userService *UserService, walletService *WalletService, limitService *TransactionLimitService, koraClient KoraClient, quidaxClient QuidaxClient, publicBaseURL ...string) *ProviderService {
+	baseURL := ""
+	if len(publicBaseURL) > 0 {
+		baseURL = publicBaseURL[0]
+	}
 	return &ProviderService{
 		db:                      db,
 		userService:             userService,
@@ -52,6 +57,7 @@ func NewProviderService(db *gorm.DB, userService *UserService, walletService *Wa
 		transactionLimitService: limitService,
 		koraClient:              koraClient,
 		quidaxClient:            quidaxClient,
+		publicBaseURL:           baseURL,
 	}
 }
 
@@ -998,6 +1004,7 @@ func (s *ProviderService) buildEscrowCheckoutOrderResponse(order *models.EscrowO
 	response := &models.EscrowOrderResponse{
 		ID:                   order.ID.String(),
 		Reference:            order.Reference,
+		PublicURL:            publicEscrowOrderURL(s.publicBaseURL, order.Reference),
 		SellerID:             order.SellerID.String(),
 		Amount:               order.Amount,
 		Currency:             order.Currency,

@@ -89,6 +89,62 @@ func TestEscrowLifecycleFundAndRelease(t *testing.T) {
 	}
 }
 
+func TestEscrowOrderResponsesIncludePublicShareURL(t *testing.T) {
+	db := setupEscrowTestDB(t)
+	userService := NewUserService(db)
+	walletService := NewWalletService(db)
+	limitService := NewTransactionLimitService(db)
+	escrowService := NewEscrowService(db, userService, walletService, limitService, "https://escra-payment-backend.onrender.com")
+
+	seller := createTestUserWithWallet(t, db, userService, walletService, "08000000021", "1111", money.Zero)
+	order, err := escrowService.CreateOrder(seller.ID, &models.CreateEscrowOrderRequest{
+		Title:        "Public preview watch",
+		Description:  "Safe public description",
+		Amount:       money.FromMinorUnits(250000),
+		Currency:     "NGN",
+		SalesChannel: "INSTAGRAM",
+		DeliveryMode: "PHYSICAL",
+	})
+	if err != nil {
+		t.Fatalf("create order: %v", err)
+	}
+
+	expectedURL := "https://escra-payment-backend.onrender.com/api/v1/public/escrows/orders/" + order.Reference
+	if order.PublicURL != expectedURL {
+		t.Fatalf("create response public url = %q", order.PublicURL)
+	}
+
+	privateOrder, err := escrowService.GetOrder(seller.ID, order.Reference)
+	if err != nil {
+		t.Fatalf("get order: %v", err)
+	}
+	if privateOrder.PublicURL != expectedURL {
+		t.Fatalf("get response public url = %q", privateOrder.PublicURL)
+	}
+
+	orders, err := escrowService.ListOrders(seller.ID)
+	if err != nil {
+		t.Fatalf("list orders: %v", err)
+	}
+	if len(orders) != 1 || orders[0].PublicURL != expectedURL {
+		t.Fatalf("list response public url = %+v", orders)
+	}
+
+	publicOrder, err := escrowService.GetPublicOrder(order.Reference)
+	if err != nil {
+		t.Fatalf("get public order: %v", err)
+	}
+	if publicOrder.PublicURL != expectedURL {
+		t.Fatalf("public preview url = %q", publicOrder.PublicURL)
+	}
+	if publicOrder.Title != "Public preview watch" || publicOrder.Amount != money.FromMinorUnits(250000) || publicOrder.Status != "CREATED" {
+		t.Fatalf("unexpected public preview: %+v", publicOrder)
+	}
+	if publicOrder.SellerName == "" {
+		t.Fatalf("expected seller display name")
+	}
+}
+
 func TestEscrowLifecycleReleaseWithPin(t *testing.T) {
 	db := setupEscrowTestDB(t)
 	userService := NewUserService(db)

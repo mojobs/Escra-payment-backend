@@ -407,13 +407,21 @@ Response:
 ```json
 {
   "reference": "ESC-20260608-ABC123",
-  "status": "AWAITING_PAYMENT",
+  "status": "CREATED",
   "amount_kobo": 45000000,
   "currency": "NGN",
   "seller_id": 2,
-  "public_url": "http://localhost:8080/api/v1/public/escrows/orders/ESC-20260608-ABC123"
+  "public_url": "https://escra-payment-backend.onrender.com/api/v1/public/escrows/orders/ESC-20260608-ABC123"
 }
 ```
+
+Seller sharing flow:
+
+1. Seller shares `public_url` on WhatsApp, Instagram, Telegram, or social media.
+2. Buyer opens the public order preview.
+3. Buyer signs in or signs up.
+4. Buyer starts Kora checkout as the authenticated buyer.
+5. Order remains `CREATED` until Kora webhook confirms payment.
 
 ### List My Escrow Orders
 
@@ -431,9 +439,10 @@ Response:
     {
       "reference": "ESC-20260608-ABC123",
       "title": "iPhone 13 Pro",
-      "status": "FUNDED",
+      "status": "CREATED",
       "amount_kobo": 45000000,
-      "currency": "NGN"
+      "currency": "NGN",
+      "public_url": "https://escra-payment-backend.onrender.com/api/v1/public/escrows/orders/ESC-20260608-ABC123"
     }
   ]
 }
@@ -458,7 +467,8 @@ Response:
   "amount_kobo": 45000000,
   "currency": "NGN",
   "seller_id": 2,
-  "buyer_id": 1
+  "buyer_id": 1,
+  "public_url": "https://escra-payment-backend.onrender.com/api/v1/public/escrows/orders/ESC-20260608-ABC123"
 }
 ```
 
@@ -477,14 +487,14 @@ Response:
 ```json
 {
   "reference": "ESC-20260608-ABC123",
+  "public_url": "https://escra-payment-backend.onrender.com/api/v1/public/escrows/orders/ESC-20260608-ABC123",
+  "seller_name": "Ada Stores",
   "title": "iPhone 13 Pro",
   "description": "Clean UK-used iPhone 13 Pro, 256GB",
   "amount_kobo": 45000000,
   "currency": "NGN",
-  "status": "AWAITING_PAYMENT",
-  "seller": {
-    "display_name": "Ada Stores"
-  }
+  "delivery_mode": "PHYSICAL",
+  "status": "CREATED"
 }
 ```
 
@@ -500,7 +510,7 @@ Idempotency key: required
 
 KYC: required
 
-Usually called by the buyer.
+Called by the authenticated buyer after opening the public order link and signing in. Sellers should not call this endpoint for generic social sharing; sellers should share `order.public_url`.
 
 Request body:
 

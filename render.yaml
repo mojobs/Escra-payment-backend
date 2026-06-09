@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: escra-payment-backend
+    env: go
+    buildCommand: go build -o server ./cmd/server
+    startCommand: ./server
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: PUBLIC_BASE_URL
+        value: https://escra-payment-backend.onrender.com

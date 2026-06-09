@@ -724,8 +724,9 @@ Recommended mobile implementation:
 
 7. Kora environment setup must be valid in deployment:
 - correct secret key
-- working webhook URL
-- valid PUBLIC_BASE_URL if the backend should derive notification URL automatically
+- Render production must set `PUBLIC_BASE_URL=https://escra-payment-backend.onrender.com`
+- backend derives Kora checkout webhook URL as `PUBLIC_BASE_URL + /api/v1/webhooks/kora`
+- mobile should normally omit `notification_url`; it is only an override for internal testing
 
 ## Suggested mobile implementation order
 1. auth and secure session storage

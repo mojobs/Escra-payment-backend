@@ -64,7 +64,7 @@ For the mobile app right now, the main product is fiat escrow.
 The intended end-to-end flow is:
 
 1. Seller creates an escrow order.
-2. Seller shares the order reference or public order link.
+2. Seller shares the `public_url` returned by the backend.
 3. Buyer opens the public order preview.
 4. Buyer signs in or registers.
 5. Buyer starts Kora checkout for that order.
@@ -396,7 +396,14 @@ Recommended UI:
 
 - create order form
 - success screen with order reference and share action
-- share public order link using the public order route
+- share `order.public_url` using the public order route
+- do not call Kora checkout from the seller share action
+
+Recommended seller CTA copy:
+
+- Share order link
+- Share payment link
+- Buyer will complete payment after opening the link
 
 ### Buyer views public order
 Route:
@@ -456,6 +463,8 @@ Recommended mobile behavior:
 
 Important note:
 
+- call this endpoint only when the authenticated user is the buyer
+- seller-owned order screens should share `public_url` instead of calling checkout
 - the order becomes truly FUNDED only after Kora webhook confirmation
 - do not mark it paid just because checkout initialization succeeded
 
@@ -704,6 +713,8 @@ The checkout route returns a Kora checkout_url.
 
 Recommended mobile implementation:
 
+- seller share actions should share `order.public_url`, not call checkout
+- buyer checkout actions should call checkout only after login/signup
 - open the returned checkout_url
 - on return, refresh the order detail
 - do not assume immediate success until webhook updates order to FUNDED
@@ -747,6 +758,7 @@ Recommended mobile implementation:
 - do not hardcode delivery code as the only confirmation path
 - collect and preserve email for users
 - design with public order preview plus authenticated checkout
+- seller share action uses `public_url`; buyer pay action uses `/checkout/kora`
 - assume disputes freeze payout
 
 ## Contact assumptions for backend collaboration

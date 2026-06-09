@@ -58,6 +58,9 @@ func TestBuyerInitiatedEscrowKoraCheckoutKeepsExistingBehavior(t *testing.T) {
 	if fakeKora.checkoutRequest.NotificationURL != "https://api.escra.test/api/v1/webhooks/kora" {
 		t.Fatalf("notification url = %q", fakeKora.checkoutRequest.NotificationURL)
 	}
+	if response.Order.Status != "CREATED" {
+		t.Fatalf("checkout should not fund order before webhook, got %q", response.Order.Status)
+	}
 
 	var providerTx models.ProviderTransaction
 	if err := db.Where("reference = ?", response.ProviderReference).First(&providerTx).Error; err != nil {
@@ -120,6 +123,9 @@ func TestSellerCanGenerateEscrowKoraCheckoutLinkWithoutBecomingBuyer(t *testing.
 	}
 	if fakeKora.checkoutRequest.Metadata["checkout_source"] != "seller_share_link" {
 		t.Fatalf("checkout source metadata = %v", fakeKora.checkoutRequest.Metadata["checkout_source"])
+	}
+	if response.Order.Status != "CREATED" {
+		t.Fatalf("seller-generated checkout should not fund order before webhook, got %q", response.Order.Status)
 	}
 
 	var providerTx models.ProviderTransaction

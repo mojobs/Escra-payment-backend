@@ -336,6 +336,7 @@ type ResolveEscrowDisputeRequest struct {
 type EscrowOrderResponse struct {
 	ID                   string             `json:"id"`
 	Reference            string             `json:"reference"`
+	PublicURL            string             `json:"public_url,omitempty"`
 	SellerID             string             `json:"seller_id"`
 	BuyerID              string             `json:"buyer_id,omitempty"`
 	BuyerName            string             `json:"buyer_name,omitempty"`
@@ -392,6 +393,7 @@ type FundEscrowOrderResponse struct {
 
 type EscrowPublicOrderResponse struct {
 	Reference            string       `json:"reference"`
+	PublicURL            string       `json:"public_url,omitempty"`
 	SellerName           string       `json:"seller_name"`
 	Title                string       `json:"title"`
 	Description          string       `json:"description,omitempty"`

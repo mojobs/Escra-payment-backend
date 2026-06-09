@@ -68,6 +68,14 @@ Base URL: `/api/v1`
 - `fx_locked_rate`
 - `fx_quote_reference`
 - `created_at`
+- `public_url`
+
+### Public-order sharing flow
+- seller shares `public_url`, not direct Kora checkout, for WhatsApp, Instagram, Telegram, and social links
+- buyer opens the public order preview without auth
+- buyer signs in or signs up
+- authenticated buyer calls `POST /api/v1/escrows/orders/:reference/checkout/kora`
+- order remains `CREATED` until Kora webhook confirms successful payment
 
 ### Kora webhook
 - `POST /api/v1/webhooks/kora`
@@ -208,6 +216,7 @@ Base URL: `/api/v1`
 - `fx_quote_reference` optional
 - `metadata` optional
 - returns: full escrow order object
+- includes `public_url` for seller sharing
 
 ### List my escrow orders
 - `GET /api/v1/escrows/orders`
@@ -216,11 +225,13 @@ Base URL: `/api/v1`
 - `success`
 - `orders`
 - `count`
+- each order includes `public_url`
 
 ### Get escrow order by reference
 - `GET /api/v1/escrows/orders/:reference`
 - auth: yes
 - returns: full escrow order object
+- includes `public_url`
 
 ### Start Kora checkout for escrow
 - `POST /api/v1/escrows/orders/:reference/checkout/kora`
@@ -247,6 +258,8 @@ Base URL: `/api/v1`
 - `channels`
 - `provider_transaction`
 - note:
+- direct Kora checkout should be called by the buyer after opening the public order link and authenticating
+- sellers should share `order.public_url` for generic WhatsApp/social payment links
 - mobile should not send server webhook URLs by default
 - if `notification_url` is omitted, backend derives it from `PUBLIC_BASE_URL`
 - production Render value: `PUBLIC_BASE_URL=https://escra-payment-backend.onrender.com`
@@ -482,6 +495,7 @@ Base URL: `/api/v1`
 ### Escrow order object
 - `id`
 - `reference`
+- `public_url`
 - `seller_id`
 - `buyer_id` optional
 - `buyer_name` optional

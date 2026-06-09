@@ -25,14 +25,20 @@ type EscrowService struct {
 	userService             *UserService
 	walletService           *WalletService
 	transactionLimitService *TransactionLimitService
+	publicBaseURL           string
 }
 
-func NewEscrowService(db *gorm.DB, userService *UserService, walletService *WalletService, limitService *TransactionLimitService) *EscrowService {
+func NewEscrowService(db *gorm.DB, userService *UserService, walletService *WalletService, limitService *TransactionLimitService, publicBaseURL ...string) *EscrowService {
+	baseURL := ""
+	if len(publicBaseURL) > 0 {
+		baseURL = publicBaseURL[0]
+	}
 	return &EscrowService{
 		db:                      db,
 		userService:             userService,
 		walletService:           walletService,
 		transactionLimitService: limitService,
+		publicBaseURL:           baseURL,
 	}
 }
 
@@ -149,6 +155,7 @@ func (s *EscrowService) GetPublicOrder(reference string) (*models.EscrowPublicOr
 
 	return &models.EscrowPublicOrderResponse{
 		Reference:            order.Reference,
+		PublicURL:            publicEscrowOrderURL(s.publicBaseURL, order.Reference),
 		SellerName:           strings.TrimSpace(strings.TrimSpace(seller.FirstName + " " + seller.LastName)),
 		Title:                order.Title,
 		Description:          order.Description,
@@ -655,6 +662,15 @@ func escrowPayinMetadataFromProviderTx(providerTx *models.ProviderTransaction) e
 	return metadata
 }
 
+func publicEscrowOrderURL(publicBaseURL, reference string) string {
+	path := "/api/v1/public/escrows/orders/" + reference
+	baseURL := strings.TrimRight(strings.TrimSpace(publicBaseURL), "/")
+	if baseURL == "" {
+		return path
+	}
+	return baseURL + path
+}
+
 func (s *EscrowService) ResolveDispute(reference string, req *models.ResolveEscrowDisputeRequest) (*models.EscrowOrderResponse, error) {
 	err := s.db.Transaction(func(tx *gorm.DB) error {
 		var order models.EscrowOrder
@@ -714,6 +730,7 @@ func (s *EscrowService) buildEscrowOrderResponse(order *models.EscrowOrder) (*mo
 	response := &models.EscrowOrderResponse{
 		ID:                   order.ID.String(),
 		Reference:            order.Reference,
+		PublicURL:            publicEscrowOrderURL(s.publicBaseURL, order.Reference),
 		SellerID:             order.SellerID.String(),
 		BuyerName:            order.BuyerName,
 		BuyerEmail:           order.BuyerEmail,

@@ -316,6 +316,109 @@ func TestWebhookFundsEscrowPayin(t *testing.T) {
 	}
 }
 
+func TestWebhookFundsSellerGeneratedEscrowPayinWithoutBuyerUser(t *testing.T) {
+	db := setupEscrowTestDB(t)
+	userService := NewUserService(db)
+	walletService := NewWalletService(db)
+	limitService := NewTransactionLimitService(db)
+	escrowService := NewEscrowService(db, userService, walletService, limitService)
+	webhookService := NewWebhookService(db, escrowService)
+
+	seller := createTestUserWithWallet(t, db, userService, walletService, "08000000017", "7777", money.Zero)
+
+	order, err := escrowService.CreateOrder(seller.ID, &models.CreateEscrowOrderRequest{
+		Title:    "Instagram bag",
+		Amount:   money.FromMinorUnits(210000),
+		Currency: "NGN",
+	})
+	if err != nil {
+		t.Fatalf("create order: %v", err)
+	}
+
+	requestPayload, _ := json.Marshal(map[string]interface{}{
+		"escrow_reference":     order.Reference,
+		"checkout_source":      "seller_share_link",
+		"initiated_by_user_id": seller.ID.String(),
+		"buyer_name":           "External Buyer",
+		"buyer_email":          "external@example.com",
+		"buyer_phone":          "08035550000",
+	})
+	providerTx := models.ProviderTransaction{
+		Provider:       "kora",
+		Reference:      "ESCROW-SELLER-LINK-1",
+		EscrowOrderID:  mustUUIDPtr(order.ID),
+		Type:           "ESCROW_PAYIN",
+		Status:         "PENDING",
+		Amount:         money.FromMinorUnits(210000),
+		Currency:       "NGN",
+		RequestPayload: json.RawMessage(requestPayload),
+	}
+	if err := db.Create(&providerTx).Error; err != nil {
+		t.Fatalf("create provider tx: %v", err)
+	}
+
+	payload, _ := json.Marshal(map[string]interface{}{
+		"event": "charge.success",
+		"data": map[string]interface{}{
+			"reference": "ESCROW-SELLER-LINK-1",
+			"status":    "success",
+		},
+	})
+	processed, err := webhookService.Record(WebhookInput{
+		Provider:  "kora",
+		EventID:   "evt-escrow-seller-link-1",
+		EventType: "charge.success",
+		Reference: "ESCROW-SELLER-LINK-1",
+		Payload:   payload,
+	})
+	if err != nil {
+		t.Fatalf("record webhook: %v", err)
+	}
+	if !processed {
+		t.Fatalf("expected webhook to be processed")
+	}
+
+	orderAfter, err := escrowService.GetOrder(seller.ID, order.Reference)
+	if err != nil {
+		t.Fatalf("get order: %v", err)
+	}
+	if orderAfter.Status != "FUNDED" {
+		t.Fatalf("got order status %q", orderAfter.Status)
+	}
+	if orderAfter.BuyerID != "" {
+		t.Fatalf("external checkout should not assign buyer id, got %q", orderAfter.BuyerID)
+	}
+	if orderAfter.BuyerEmail != "external@example.com" {
+		t.Fatalf("buyer email = %q", orderAfter.BuyerEmail)
+	}
+
+	var orderRow models.EscrowOrder
+	if err := db.Where("id = ?", order.ID).First(&orderRow).Error; err != nil {
+		t.Fatalf("find order row: %v", err)
+	}
+	if orderRow.BuyerID != nil || orderRow.BuyerWalletID != nil {
+		t.Fatalf("external checkout should leave buyer pointers nil: buyer=%v wallet=%v", orderRow.BuyerID, orderRow.BuyerWalletID)
+	}
+
+	escrowWallet, err := walletService.GetWalletByReference("SYSTEM", "ESCROW_NGN")
+	if err != nil {
+		t.Fatalf("get escrow wallet: %v", err)
+	}
+	if escrowWallet.Balance != money.FromMinorUnits(210000) {
+		t.Fatalf("got escrow balance %d", escrowWallet.Balance)
+	}
+
+	_, err = escrowService.RefundOrder(seller.ID, order.Reference, &models.RefundEscrowOrderRequest{
+		Reason: "Buyer requested refund",
+	})
+	if err == nil {
+		t.Fatalf("expected external refund guard error")
+	}
+	if err.Error() != "escrow order was funded through external Kora checkout; initiate a Kora refund instead" {
+		t.Fatalf("unexpected refund error: %v", err)
+	}
+}
+
 func setupEscrowTestDB(t *testing.T) *gorm.DB {
 	t.Helper()
 

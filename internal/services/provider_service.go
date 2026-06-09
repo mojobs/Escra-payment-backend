@@ -499,33 +499,18 @@ func (s *ProviderService) InitiateEscrowKoraCheckout(ctx context.Context, userID
 	if order.Status != "CREATED" {
 		return nil, fmt.Errorf("escrow order cannot be checked out from state %s", order.Status)
 	}
-	if order.SellerID == userID {
-		return nil, errors.New("seller cannot pay their own escrow order")
-	}
-	if order.BuyerID != nil && *order.BuyerID != userID {
-		return nil, errors.New("another buyer has already started checkout for this escrow order")
-	}
 
-	user, err := s.userService.GetUserByID(userID.String())
+	initiator, err := s.userService.GetUserByID(userID.String())
 	if err != nil {
 		return nil, err
 	}
-	if !isUserKYCVerified(user) {
+	if !isUserKYCVerified(initiator) {
 		return nil, errors.New("complete Kora KYC before starting escrow checkout")
 	}
-	if user.Email == nil || strings.TrimSpace(*user.Email) == "" {
-		return nil, errors.New("buyer email is required to start Kora checkout")
-	}
 
-	var buyerWallet models.Wallet
-	if err := s.db.Where("owner_type = ? AND user_id = ?", "USER", userID).First(&buyerWallet).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("buyer wallet not found")
-		}
+	initiatedBySeller := order.SellerID == userID
+	if err := s.ensureNoConflictingEscrowPaymentFlow(order.ID, userID, initiatedBySeller); err != nil {
 		return nil, err
-	}
-	if buyerWallet.Currency != order.Currency {
-		return nil, fmt.Errorf("buyer wallet currency %s does not match order currency %s", buyerWallet.Currency, order.Currency)
 	}
 
 	notificationURL := strings.TrimSpace(req.NotificationURL)
@@ -539,20 +524,71 @@ func (s *ProviderService) InitiateEscrowKoraCheckout(ctx context.Context, userID
 		return nil, errors.New("notification url is required to start Kora checkout")
 	}
 
+	checkoutSource := "buyer_authenticated"
+	payerType := "registered_user"
+	customerName := strings.TrimSpace(initiator.FirstName + " " + initiator.LastName)
+	customerEmail := ""
+	if initiator.Email != nil {
+		customerEmail = strings.TrimSpace(*initiator.Email)
+	}
+	customerPhone := initiator.Phone
+	var buyerUserID *uuid.UUID
+	var buyerWalletID *uuid.UUID
+
+	if initiatedBySeller {
+		checkoutSource = "seller_share_link"
+		payerType = "external"
+		if order.BuyerID != nil {
+			return nil, errors.New("escrow order already has a committed buyer")
+		}
+		customerName = strings.TrimSpace(req.BuyerName)
+		customerEmail = strings.TrimSpace(req.BuyerEmail)
+		customerPhone = strings.TrimSpace(req.BuyerPhone)
+		if customerEmail == "" {
+			return nil, errors.New("buyer_email is required when seller generates a Kora checkout link")
+		}
+	} else {
+		if order.BuyerID != nil && *order.BuyerID != userID {
+			return nil, errors.New("another buyer has already started checkout for this escrow order")
+		}
+		if customerEmail == "" {
+			return nil, errors.New("buyer email is required to start Kora checkout")
+		}
+
+		var buyerWallet models.Wallet
+		if err := s.db.Where("owner_type = ? AND user_id = ?", "USER", userID).First(&buyerWallet).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, errors.New("buyer wallet not found")
+			}
+			return nil, err
+		}
+		if buyerWallet.Currency != order.Currency {
+			return nil, fmt.Errorf("buyer wallet currency %s does not match order currency %s", buyerWallet.Currency, order.Currency)
+		}
+		buyerUserID = &userID
+		buyerWalletID = &buyerWallet.ID
+	}
+
+	koraCustomerName := firstNonEmpty(customerName, "ESCRA Buyer")
 	providerReference := providerReference("ESCROW")
 	requestPayload, err := json.Marshal(map[string]interface{}{
-		"escrow_reference":    order.Reference,
-		"buyer_id":            userID.String(),
-		"buyer_email":         *user.Email,
-		"buyer_phone":         user.Phone,
-		"notification_url":    notificationURL,
-		"redirect_url":        req.RedirectURL,
-		"narration":           req.Narration,
-		"merchant_bears_cost": req.MerchantBearsCost,
-		"default_channel":     req.DefaultChannel,
-		"channels":            req.Channels,
-		"currency":            order.Currency,
-		"amount_kobo":         order.Amount,
+		"escrow_reference":     order.Reference,
+		"checkout_source":      checkoutSource,
+		"payer_type":           payerType,
+		"initiated_by_user_id": userID.String(),
+		"seller_id":            order.SellerID.String(),
+		"buyer_id":             uuidStringOrEmpty(buyerUserID),
+		"buyer_email":          customerEmail,
+		"buyer_name":           customerName,
+		"buyer_phone":          customerPhone,
+		"notification_url":     notificationURL,
+		"redirect_url":         req.RedirectURL,
+		"narration":            req.Narration,
+		"merchant_bears_cost":  req.MerchantBearsCost,
+		"default_channel":      req.DefaultChannel,
+		"channels":             req.Channels,
+		"currency":             order.Currency,
+		"amount_kobo":          order.Amount,
 	})
 	if err != nil {
 		return nil, err
@@ -562,7 +598,7 @@ func (s *ProviderService) InitiateEscrowKoraCheckout(ctx context.Context, userID
 		Provider:          "kora",
 		Reference:         providerReference,
 		ExternalReference: "",
-		UserID:            &userID,
+		UserID:            buyerUserID,
 		EscrowOrderID:     &order.ID,
 		Type:              "ESCROW_PAYIN",
 		Status:            "PENDING",
@@ -574,7 +610,6 @@ func (s *ProviderService) InitiateEscrowKoraCheckout(ctx context.Context, userID
 		return nil, err
 	}
 
-	customerName := strings.TrimSpace(strings.TrimSpace(user.FirstName + " " + user.LastName))
 	checkoutResponse, err := s.koraClient.InitializeCheckout(ctx, kora.CheckoutRequest{
 		Reference:         providerReference,
 		Amount:            order.Amount,
@@ -584,13 +619,18 @@ func (s *ProviderService) InitiateEscrowKoraCheckout(ctx context.Context, userID
 		DefaultChannel:    req.DefaultChannel,
 		Channels:          req.Channels,
 		MerchantBearsCost: req.MerchantBearsCost,
-		CustomerName:      customerName,
-		CustomerEmail:     *user.Email,
-		CustomerPhone:     user.Phone,
+		CustomerName:      koraCustomerName,
+		CustomerEmail:     customerEmail,
+		CustomerPhone:     customerPhone,
 		Narration:         firstNonEmpty(req.Narration, fmt.Sprintf("Escrow payment for %s", order.Reference)),
 		Metadata: map[string]interface{}{
-			"escrow_reference": order.Reference,
-			"buyer_id":         userID.String(),
+			"escrow_reference":     order.Reference,
+			"checkout_source":      checkoutSource,
+			"initiated_by_user_id": userID.String(),
+			"seller_id":            order.SellerID.String(),
+			"buyer_id":             uuidStringOrEmpty(buyerUserID),
+			"buyer_email":          customerEmail,
+			"buyer_phone":          customerPhone,
 		},
 	})
 	if err != nil {
@@ -626,20 +666,25 @@ func (s *ProviderService) InitiateEscrowKoraCheckout(ctx context.Context, userID
 	providerTx.ExternalReference = checkoutResponse.Reference
 	providerTx.ResponsePayload = checkoutResponse.Raw
 
-	if err := s.db.Model(&order).Updates(map[string]interface{}{
-		"buyer_id":        userID,
-		"buyer_wallet_id": buyerWallet.ID,
-		"buyer_name":      customerName,
-		"buyer_email":     *user.Email,
-		"buyer_phone":     user.Phone,
-	}).Error; err != nil {
+	orderUpdates := map[string]interface{}{
+		"buyer_name":  customerName,
+		"buyer_email": customerEmail,
+		"buyer_phone": customerPhone,
+	}
+	if !initiatedBySeller {
+		orderUpdates["buyer_id"] = *buyerUserID
+		orderUpdates["buyer_wallet_id"] = *buyerWalletID
+	}
+	if err := s.db.Model(&order).Updates(orderUpdates).Error; err != nil {
 		return nil, err
 	}
-	order.BuyerID = &userID
-	order.BuyerWalletID = &buyerWallet.ID
+	if !initiatedBySeller {
+		order.BuyerID = buyerUserID
+		order.BuyerWalletID = buyerWalletID
+	}
 	order.BuyerName = customerName
-	order.BuyerEmail = *user.Email
-	order.BuyerPhone = user.Phone
+	order.BuyerEmail = customerEmail
+	order.BuyerPhone = customerPhone
 
 	orderResponse, err := s.buildEscrowCheckoutOrderResponse(&order)
 	if err != nil {
@@ -914,6 +959,28 @@ func (s *ProviderService) updateProviderAfterRequest(providerTx models.ProviderT
 	})
 }
 
+func (s *ProviderService) ensureNoConflictingEscrowPaymentFlow(orderID, actorID uuid.UUID, actorIsSeller bool) error {
+	var providerTxs []models.ProviderTransaction
+	if err := s.db.Where(
+		"escrow_order_id = ? AND type IN ? AND status IN ?",
+		orderID,
+		[]string{"ESCROW_PAYIN", "ESCROW_VIRTUAL_ACCOUNT"},
+		[]string{"PENDING", "PROCESSING", "SUCCESS"},
+	).Find(&providerTxs).Error; err != nil {
+		return err
+	}
+
+	for _, providerTx := range providerTxs {
+		if actorIsSeller {
+			return errors.New("escrow order already has an active payment flow")
+		}
+		if providerTx.UserID == nil || *providerTx.UserID != actorID {
+			return errors.New("another buyer has already started checkout for this escrow order")
+		}
+	}
+	return nil
+}
+
 func (s *ProviderService) buildEscrowCheckoutOrderResponse(order *models.EscrowOrder) (*models.EscrowOrderResponse, error) {
 	var events []models.EscrowEvent
 	if err := s.db.Where("escrow_id = ?", order.ID).Order("created_at ASC").Find(&events).Error; err != nil {
@@ -1018,6 +1085,13 @@ func firstNonEmpty(values ...string) string {
 		}
 	}
 	return ""
+}
+
+func uuidStringOrEmpty(id *uuid.UUID) string {
+	if id == nil {
+		return ""
+	}
+	return id.String()
 }
 
 func providerTransactionResponseDTO(tx *models.ProviderTransaction) models.ProviderTransactionResponse {

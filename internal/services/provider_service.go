@@ -384,13 +384,11 @@ func (s *ProviderService) InitiateWalletKoraCheckout(ctx context.Context, userID
 
 	notificationURL := strings.TrimSpace(req.NotificationURL)
 	if notificationURL == "" {
-		notificationURL = strings.TrimRight(defaultNotificationURL, "/")
-		if notificationURL != "" {
-			notificationURL += "/api/v1/webhooks/kora"
+		var err error
+		notificationURL, err = koraCheckoutNotificationURL(defaultNotificationURL)
+		if err != nil {
+			return nil, err
 		}
-	}
-	if notificationURL == "" {
-		return nil, errors.New("notification url is required to start wallet checkout")
 	}
 
 	reference := providerReference("DEP-KORA")
@@ -515,13 +513,11 @@ func (s *ProviderService) InitiateEscrowKoraCheckout(ctx context.Context, userID
 
 	notificationURL := strings.TrimSpace(req.NotificationURL)
 	if notificationURL == "" {
-		notificationURL = strings.TrimRight(defaultNotificationURL, "/")
-		if notificationURL != "" {
-			notificationURL += "/api/v1/webhooks/kora"
+		var err error
+		notificationURL, err = koraCheckoutNotificationURL(defaultNotificationURL)
+		if err != nil {
+			return nil, err
 		}
-	}
-	if notificationURL == "" {
-		return nil, errors.New("notification url is required to start Kora checkout")
 	}
 
 	checkoutSource := "buyer_authenticated"
@@ -979,6 +975,14 @@ func (s *ProviderService) ensureNoConflictingEscrowPaymentFlow(orderID, actorID 
 		}
 	}
 	return nil
+}
+
+func koraCheckoutNotificationURL(publicBaseURL string) (string, error) {
+	baseURL := strings.TrimRight(strings.TrimSpace(publicBaseURL), "/")
+	if baseURL == "" {
+		return "", errors.New("server is missing PUBLIC_BASE_URL or notification_url")
+	}
+	return baseURL + "/api/v1/webhooks/kora", nil
 }
 
 func (s *ProviderService) buildEscrowCheckoutOrderResponse(order *models.EscrowOrder) (*models.EscrowOrderResponse, error) {

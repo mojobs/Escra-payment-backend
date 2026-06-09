@@ -55,6 +55,9 @@ func TestBuyerInitiatedEscrowKoraCheckoutKeepsExistingBehavior(t *testing.T) {
 	if fakeKora.checkoutRequest.Metadata["checkout_source"] != "buyer_authenticated" {
 		t.Fatalf("checkout source metadata = %v", fakeKora.checkoutRequest.Metadata["checkout_source"])
 	}
+	if fakeKora.checkoutRequest.NotificationURL != "https://api.escra.test/api/v1/webhooks/kora" {
+		t.Fatalf("notification url = %q", fakeKora.checkoutRequest.NotificationURL)
+	}
 
 	var providerTx models.ProviderTransaction
 	if err := db.Where("reference = ?", response.ProviderReference).First(&providerTx).Error; err != nil {
@@ -143,6 +146,71 @@ func TestSellerCanGenerateEscrowKoraCheckoutLinkWithoutBecomingBuyer(t *testing.
 	}
 	if orderRow.BuyerID != nil || orderRow.BuyerWalletID != nil {
 		t.Fatalf("seller link should not set buyer pointers: buyer=%v wallet=%v", orderRow.BuyerID, orderRow.BuyerWalletID)
+	}
+}
+
+func TestEscrowKoraCheckoutUsesRequestNotificationURLOverride(t *testing.T) {
+	db := setupEscrowTestDB(t)
+	userService := NewUserService(db)
+	walletService := NewWalletService(db)
+	limitService := NewTransactionLimitService(db)
+	fakeKora := &fakeWalletCheckoutKoraClient{}
+	providerService := NewProviderService(db, userService, walletService, limitService, fakeKora, nil)
+
+	seller := createTestUserWithWallet(t, db, userService, walletService, "08000000945", "1234", money.Zero)
+	buyer := createTestUserWithWallet(t, db, userService, walletService, "08000000946", "1234", money.Zero)
+	markUserVerifiedWithEmail(t, db, buyer, "override-buyer@example.com")
+
+	escrowService := NewEscrowService(db, userService, walletService, limitService)
+	order, err := escrowService.CreateOrder(seller.ID, &models.CreateEscrowOrderRequest{
+		Title:    "Override checkout",
+		Amount:   money.FromMinorUnits(120000),
+		Currency: "NGN",
+	})
+	if err != nil {
+		t.Fatalf("create order: %v", err)
+	}
+
+	_, err = providerService.InitiateEscrowKoraCheckout(context.Background(), buyer.ID, order.Reference, &models.KoraEscrowCheckoutRequest{
+		NotificationURL: "https://internal.example.test/webhooks/kora",
+	}, "")
+	if err != nil {
+		t.Fatalf("initiate checkout with notification override: %v", err)
+	}
+	if fakeKora.checkoutRequest.NotificationURL != "https://internal.example.test/webhooks/kora" {
+		t.Fatalf("notification url = %q", fakeKora.checkoutRequest.NotificationURL)
+	}
+}
+
+func TestEscrowKoraCheckoutMissingNotificationURLConfigReturnsClearError(t *testing.T) {
+	db := setupEscrowTestDB(t)
+	userService := NewUserService(db)
+	walletService := NewWalletService(db)
+	limitService := NewTransactionLimitService(db)
+	providerService := NewProviderService(db, userService, walletService, limitService, &fakeWalletCheckoutKoraClient{}, nil)
+
+	seller := createTestUserWithWallet(t, db, userService, walletService, "08000000947", "1234", money.Zero)
+	buyer := createTestUserWithWallet(t, db, userService, walletService, "08000000948", "1234", money.Zero)
+	markUserVerifiedWithEmail(t, db, buyer, "missing-config-buyer@example.com")
+
+	escrowService := NewEscrowService(db, userService, walletService, limitService)
+	order, err := escrowService.CreateOrder(seller.ID, &models.CreateEscrowOrderRequest{
+		Title:    "Missing config checkout",
+		Amount:   money.FromMinorUnits(130000),
+		Currency: "NGN",
+	})
+	if err != nil {
+		t.Fatalf("create order: %v", err)
+	}
+
+	_, err = providerService.InitiateEscrowKoraCheckout(context.Background(), buyer.ID, order.Reference, &models.KoraEscrowCheckoutRequest{
+		MerchantBearsCost: false,
+	}, "")
+	if err == nil {
+		t.Fatalf("expected missing PUBLIC_BASE_URL error")
+	}
+	if err.Error() != "server is missing PUBLIC_BASE_URL or notification_url" {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
 

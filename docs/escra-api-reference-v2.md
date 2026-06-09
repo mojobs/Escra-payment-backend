@@ -507,12 +507,19 @@ Request body:
 ```json
 {
   "redirect_url": "escra://payment-complete",
-  "notification_url": "https://your-api.com/api/v1/webhooks/kora",
   "channels": ["bank_transfer", "card"],
   "default_channel": "bank_transfer",
   "merchant_bears_cost": true
 }
 ```
+
+The mobile app should normally omit `notification_url`. The backend derives Kora's webhook URL from `PUBLIC_BASE_URL`, for example:
+
+```text
+https://escra-payment-backend.onrender.com/api/v1/webhooks/kora
+```
+
+`notification_url` remains available as an override for internal testing.
 
 Response:
 
@@ -1343,7 +1350,7 @@ For all payment mutation screens, the mobile app should use `Idempotency-Key` an
 ```env
 APP_ENV=development
 PORT=8080
-PUBLIC_BASE_URL=http://localhost:8080
+PUBLIC_BASE_URL=https://escra-payment-backend.onrender.com
 
 JWT_SECRET=replace_me
 ADMIN_API_KEY=replace_me
@@ -1357,6 +1364,14 @@ QUIDAX_BASE_URL=https://www.quidax.com/api/v1
 QUIDAX_SECRET_KEY=replace_me
 QUIDAX_WEBHOOK_SECRET=replace_me
 ```
+
+On Render production, set:
+
+```env
+PUBLIC_BASE_URL=https://escra-payment-backend.onrender.com
+```
+
+Without `PUBLIC_BASE_URL`, Kora checkout cannot derive `https://escra-payment-backend.onrender.com/api/v1/webhooks/kora` when the mobile app omits `notification_url`.
 
 ## Mobile Developer Notes
 

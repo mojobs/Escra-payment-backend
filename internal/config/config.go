@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -41,7 +42,7 @@ func LoadConfig() *Config {
 	if jwt_secret == "" {
 		log.Fatal("JWT_SECRET is required")
 	}
-	return &Config{
+	cfg := &Config{
 		Port:                   getEnv("PORT", "8080"),
 		DBHost:                 getEnv("DB_HOST", "localhost"),
 		DBPort:                 getEnv("DB_PORT", "5432"),
@@ -66,6 +67,10 @@ func LoadConfig() *Config {
 		QuidaxSecretKey:        getEnv("QUIDAX_SECRET_KEY", ""),
 		QuidaxWebhookSecret:    getEnv("QUIDAX_WEBHOOK_SECRET", ""),
 	}
+	if shouldWarnMissingPublicBaseURL(cfg.Environment) && strings.TrimSpace(cfg.PublicBaseURL) == "" {
+		log.Println("WARNING: PUBLIC_BASE_URL is empty; Kora checkout cannot derive webhook notification URLs unless request notification_url is supplied")
+	}
+	return cfg
 }
 
 func getEnv(key, defaultValue string) string {
@@ -73,4 +78,16 @@ func getEnv(key, defaultValue string) string {
 		return value
 	}
 	return defaultValue
+}
+
+func shouldWarnMissingPublicBaseURL(environment string) bool {
+	if os.Getenv("RENDER") != "" || os.Getenv("RENDER_SERVICE_ID") != "" {
+		return true
+	}
+	switch strings.ToLower(strings.TrimSpace(environment)) {
+	case "", "development", "dev", "local", "test":
+		return false
+	default:
+		return true
+	}
 }

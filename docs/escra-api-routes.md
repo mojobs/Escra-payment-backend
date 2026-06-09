@@ -246,6 +246,10 @@ Base URL: `/api/v1`
 - `default_channel`
 - `channels`
 - `provider_transaction`
+- note:
+- mobile should not send server webhook URLs by default
+- if `notification_url` is omitted, backend derives it from `PUBLIC_BASE_URL`
+- production Render value: `PUBLIC_BASE_URL=https://escra-payment-backend.onrender.com`
 
 ### Fund escrow from internal ESCRA wallet
 - `POST /api/v1/escrows/orders/:reference/fund`

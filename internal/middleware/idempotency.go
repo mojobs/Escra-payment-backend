@@ -63,7 +63,7 @@ func IdempotencyMiddleware(idempotencyService *services.IdempotencyService) gin.
 		endpoint := c.Request.URL.Path
 
 		//Read request body before reserving the key so concurrent retries race on the same request hash.
-		var requestBody interface{} = map[string]interface{}{}
+		var requestBody interface{}
 		var bodyBytes []byte
 		if c.Request.Body != nil {
 			bodyBytes, _ = io.ReadAll(c.Request.Body)

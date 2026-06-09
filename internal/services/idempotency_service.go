@@ -49,8 +49,8 @@ func (s *IdempotencyService) ReserveKey(key string, userID uuid.UUID, endpoint s
 			return nil, errors.New("idempotent request is already in progress")
 		}
 
-		var response interface{}
-		if err := json.Unmarshal([]byte(idempotency.Response), &response); err != nil {
+		response, err := decodeRawJSON(idempotency.Response)
+		if err != nil {
 			return nil, err
 		}
 
@@ -65,7 +65,7 @@ func (s *IdempotencyService) ReserveKey(key string, userID uuid.UUID, endpoint s
 		return nil, err
 	}
 
-	reqJSON, err := jsonForDB(requestBody, "{}")
+	reqJSON, err := jsonForDB(requestBody)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,6 @@ func (s *IdempotencyService) ReserveKey(key string, userID uuid.UUID, endpoint s
 		Endpoint:    endpoint,
 		RequestHash: requestHash,
 		RequestBody: reqJSON,
-		Response:    "null",
 		State:       "PENDING",
 		ExpiresAt:   time.Now().Add(24 * time.Hour),
 	}
@@ -91,7 +90,7 @@ func (s *IdempotencyService) ReserveKey(key string, userID uuid.UUID, endpoint s
 //StoreKey stores a new idempotency key with its response
 
 func (s *IdempotencyService) StoreKey(key string, userID uuid.UUID, endpoint string, requestBody, response interface{}, statusCode int) error {
-	resJSON, err := jsonForDB(response, "null")
+	resJSON, err := jsonForDB(response)
 	if err != nil {
 		return err
 	}
@@ -99,14 +98,14 @@ func (s *IdempotencyService) StoreKey(key string, userID uuid.UUID, endpoint str
 	return s.db.Model(&models.IdempotencyKey{}).
 		Where("key = ? AND user_id = ? AND endpoint = ?", key, userID, endpoint).
 		Updates(map[string]interface{}{
-			"response":    resJSON,
+			"response":    nullableRawJSON(resJSON),
 			"status_code": statusCode,
 			"state":       "COMPLETED",
 		}).Error
 }
 
 func (s *IdempotencyService) StoreFailure(key string, userID uuid.UUID, endpoint string, response interface{}, statusCode int) error {
-	resJSON, err := jsonForDB(response, "null")
+	resJSON, err := jsonForDB(response)
 	if err != nil {
 		return err
 	}
@@ -114,7 +113,7 @@ func (s *IdempotencyService) StoreFailure(key string, userID uuid.UUID, endpoint
 	return s.db.Model(&models.IdempotencyKey{}).
 		Where("key = ? AND user_id = ? AND endpoint = ?", key, userID, endpoint).
 		Updates(map[string]interface{}{
-			"response":    resJSON,
+			"response":    nullableRawJSON(resJSON),
 			"status_code": statusCode,
 			"state":       "FAILED",
 		}).Error
@@ -124,45 +123,64 @@ func (s *IdempotencyService) CleanupExpired() error {
 	return s.db.Where("expires_at < ?", time.Now()).Delete(&models.IdempotencyKey{}).Error
 }
 
-func jsonForDB(value interface{}, emptyValue string) (string, error) {
+func jsonForDB(value interface{}) (json.RawMessage, error) {
 	if value == nil {
-		return emptyValue, nil
+		return nil, nil
 	}
 
 	switch typed := value.(type) {
 	case json.RawMessage:
-		return validJSONOrEmpty([]byte(typed), emptyValue)
+		return validRawJSON(typed)
 	case []byte:
-		return validJSONOrEmpty(typed, emptyValue)
+		return validRawJSON(typed)
 	case string:
 		trimmed := strings.TrimSpace(typed)
 		if trimmed == "" {
-			return emptyValue, nil
+			return nil, nil
 		}
 		if json.Valid([]byte(trimmed)) {
-			return trimmed, nil
+			return json.RawMessage(append([]byte(nil), trimmed...)), nil
 		}
 		encoded, err := json.Marshal(trimmed)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
-		return string(encoded), nil
+		return json.RawMessage(encoded), nil
 	default:
 		encoded, err := json.Marshal(value)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
-		return validJSONOrEmpty(encoded, emptyValue)
+		return validRawJSON(encoded)
 	}
 }
 
-func validJSONOrEmpty(payload []byte, emptyValue string) (string, error) {
+func validRawJSON(payload []byte) (json.RawMessage, error) {
 	trimmed := bytes.TrimSpace(payload)
 	if len(trimmed) == 0 {
-		return emptyValue, nil
+		return nil, nil
 	}
 	if !json.Valid(trimmed) {
-		return "", errors.New("request or response payload is not valid JSON")
+		return nil, errors.New("request or response payload is not valid JSON")
 	}
-	return string(trimmed), nil
+	return json.RawMessage(append([]byte(nil), trimmed...)), nil
+}
+
+func nullableRawJSON(payload json.RawMessage) interface{} {
+	if len(payload) == 0 {
+		return nil
+	}
+	return payload
+}
+
+func decodeRawJSON(payload json.RawMessage) (interface{}, error) {
+	if len(payload) == 0 {
+		return nil, nil
+	}
+
+	var value interface{}
+	if err := json.Unmarshal(payload, &value); err != nil {
+		return nil, err
+	}
+	return value, nil
 }

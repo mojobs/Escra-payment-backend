@@ -526,18 +526,51 @@ func (s *EscrowService) FundOrderFromProviderTx(tx *gorm.DB, orderID uuid.UUID, 
 	if order.Status != "CREATED" {
 		return fmt.Errorf("escrow order cannot be provider-funded from state %s", order.Status)
 	}
-	if providerTx.UserID == nil {
-		return errors.New("provider-funded escrow requires a buyer user")
+
+	metadata := escrowPayinMetadataFromProviderTx(providerTx)
+	if providerTx.UserID != nil && *providerTx.UserID == order.SellerID {
+		return errors.New("seller cannot be recorded as buyer for provider-funded escrow")
+	}
+	if providerTx.UserID == nil && order.BuyerID != nil {
+		return errors.New("external provider payment cannot fund an order with a registered buyer")
+	}
+	if providerTx.UserID != nil && order.BuyerID != nil && *order.BuyerID != *providerTx.UserID {
+		return errors.New("provider payment buyer does not match committed escrow buyer")
 	}
 
-	var buyerWallet models.Wallet
-	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
-		Where("owner_type = ? AND user_id = ?", "USER", *providerTx.UserID).
-		First(&buyerWallet).Error; err != nil {
-		return err
-	}
-	if buyerWallet.Currency != order.Currency {
-		return fmt.Errorf("buyer wallet currency %s does not match order currency %s", buyerWallet.Currency, order.Currency)
+	var buyerWallet *models.Wallet
+	var buyerName string
+	var buyerEmail string
+	var buyerPhone string
+	var actorUserID *uuid.UUID
+	if providerTx.UserID != nil {
+		var wallet models.Wallet
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where("owner_type = ? AND user_id = ?", "USER", *providerTx.UserID).
+			First(&wallet).Error; err != nil {
+			return err
+		}
+		if wallet.Currency != order.Currency {
+			return fmt.Errorf("buyer wallet currency %s does not match order currency %s", wallet.Currency, order.Currency)
+		}
+
+		buyer, err := s.userService.GetUserByID(providerTx.UserID.String())
+		if err != nil {
+			return err
+		}
+		buyerWallet = &wallet
+		actorUserID = providerTx.UserID
+		buyerName = firstNonEmpty(metadata.BuyerName, strings.TrimSpace(buyer.FirstName+" "+buyer.LastName))
+		if buyer.Email != nil {
+			buyerEmail = firstNonEmpty(metadata.BuyerEmail, *buyer.Email)
+		} else {
+			buyerEmail = metadata.BuyerEmail
+		}
+		buyerPhone = firstNonEmpty(metadata.BuyerPhone, buyer.Phone)
+	} else {
+		buyerName = firstNonEmpty(metadata.BuyerName, order.BuyerName)
+		buyerEmail = firstNonEmpty(metadata.BuyerEmail, order.BuyerEmail)
+		buyerPhone = firstNonEmpty(metadata.BuyerPhone, order.BuyerPhone)
 	}
 
 	railWallet, err := s.walletService.getOrCreateSystemWallet(tx, koraInflowWalletReference(order.Currency), order.Currency)
@@ -563,33 +596,24 @@ func (s *EscrowService) FundOrderFromProviderTx(tx *gorm.DB, orderID uuid.UUID, 
 		"provider":           providerTx.Provider,
 		"provider_reference": providerTx.Reference,
 		"escrow_reference":   order.Reference,
+		"checkout_source":    metadata.CheckoutSource,
 	}); err != nil {
 		return err
 	}
 
-	buyer, err := s.userService.GetUserByID(providerTx.UserID.String())
-	if err != nil {
-		return err
-	}
-	buyerName := strings.TrimSpace(strings.TrimSpace(buyer.FirstName + " " + buyer.LastName))
-	buyerEmail := ""
-	if buyer.Email != nil {
-		buyerEmail = *buyer.Email
-	}
-
 	fundedAt := time.Now().UTC()
-	order.BuyerID = providerTx.UserID
-	order.BuyerWalletID = &buyerWallet.ID
 	order.EscrowWalletID = &escrowWallet.ID
 	order.BuyerName = buyerName
 	order.BuyerEmail = buyerEmail
-	order.BuyerPhone = buyer.Phone
+	order.BuyerPhone = buyerPhone
 	order.Status = "FUNDED"
 	order.FundedAt = &fundedAt
+	if providerTx.UserID != nil {
+		order.BuyerID = providerTx.UserID
+		order.BuyerWalletID = &buyerWallet.ID
+	}
 
-	if err := tx.Model(&order).Updates(map[string]interface{}{
-		"buyer_id":              order.BuyerID,
-		"buyer_wallet_id":       order.BuyerWalletID,
+	updates := map[string]interface{}{
 		"escrow_wallet_id":      order.EscrowWalletID,
 		"buyer_name":            order.BuyerName,
 		"buyer_email":           order.BuyerEmail,
@@ -597,15 +621,38 @@ func (s *EscrowService) FundOrderFromProviderTx(tx *gorm.DB, orderID uuid.UUID, 
 		"status":                order.Status,
 		"funded_at":             fundedAt,
 		"confirmation_deadline": nil,
-	}).Error; err != nil {
+	}
+	if providerTx.UserID != nil {
+		updates["buyer_id"] = order.BuyerID
+		updates["buyer_wallet_id"] = order.BuyerWalletID
+	}
+	if err := tx.Model(&order).Updates(updates).Error; err != nil {
 		return err
 	}
 
-	return s.recordEscrowEvent(tx, order.ID, providerTx.UserID, "ORDER_FUNDED", "Buyer funded escrow order through Kora checkout", map[string]interface{}{
+	return s.recordEscrowEvent(tx, order.ID, actorUserID, "ORDER_FUNDED", "Buyer funded escrow order through Kora checkout", map[string]interface{}{
 		"provider":           providerTx.Provider,
 		"provider_reference": providerTx.Reference,
 		"amount_kobo":        order.Amount,
+		"checkout_source":    metadata.CheckoutSource,
+		"buyer_email":        buyerEmail,
 	})
+}
+
+type escrowProviderPayinMetadata struct {
+	CheckoutSource string `json:"checkout_source"`
+	BuyerName      string `json:"buyer_name"`
+	BuyerEmail     string `json:"buyer_email"`
+	BuyerPhone     string `json:"buyer_phone"`
+}
+
+func escrowPayinMetadataFromProviderTx(providerTx *models.ProviderTransaction) escrowProviderPayinMetadata {
+	var metadata escrowProviderPayinMetadata
+	if providerTx == nil || len(providerTx.RequestPayload) == 0 {
+		return metadata
+	}
+	_ = json.Unmarshal(providerTx.RequestPayload, &metadata)
+	return metadata
 }
 
 func (s *EscrowService) ResolveDispute(reference string, req *models.ResolveEscrowDisputeRequest) (*models.EscrowOrderResponse, error) {
@@ -758,8 +805,11 @@ func (s *EscrowService) releaseEscrowTx(tx *gorm.DB, order *models.EscrowOrder, 
 }
 
 func (s *EscrowService) refundEscrowTx(tx *gorm.DB, order *models.EscrowOrder, actorUserID *uuid.UUID, action, note string) error {
-	if order.BuyerID == nil || order.BuyerWalletID == nil || order.EscrowWalletID == nil {
+	if order.EscrowWalletID == nil {
 		return errors.New("escrow order is not fully funded")
+	}
+	if order.BuyerID == nil || order.BuyerWalletID == nil {
+		return errors.New("escrow order was funded through external Kora checkout; initiate a Kora refund instead")
 	}
 
 	var escrowWallet, buyerWallet models.Wallet

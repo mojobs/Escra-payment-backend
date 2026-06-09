@@ -289,6 +289,9 @@ type KoraEscrowCheckoutRequest struct {
 	Channels          []string `json:"channels,omitempty"`
 	DefaultChannel    string   `json:"default_channel,omitempty" binding:"omitempty,max=30"`
 	MerchantBearsCost bool     `json:"merchant_bears_cost"`
+	BuyerName         string   `json:"buyer_name,omitempty" binding:"omitempty,max=120"`
+	BuyerEmail        string   `json:"buyer_email,omitempty" binding:"omitempty,email,max=225"`
+	BuyerPhone        string   `json:"buyer_phone,omitempty" binding:"omitempty,max=20"`
 }
 
 type FundEscrowOrderRequest struct {
